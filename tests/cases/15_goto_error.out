@@ -1,0 +1,8 @@
+ERROR in 15_goto_error.jlb, line 2: GOTO nowhere: there's no POINT nowhere it can reach (GOTO can't jump into a block or out of a function)
+
+Called from:
+    f()  line 2
+
+Variables:
+    f:       (none)
+    outside: (none)

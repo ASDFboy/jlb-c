@@ -1,0 +1,58 @@
+>> Tables: positions, names, changing, INSERT, DROP, LEN, + with tables
+fruits = ["apple", "pear", "orange"]
+PRINT(fruits[1])
+PRINT(fruits[-1])
+PRINT(fruits[-2])
+PRINT(fruits[0])
+PRINT(fruits[10])
+player = [name: "Alex", score: 10]
+PRINT(player.name)
+PRINT(player["name"])
+key = "score"
+PRINT(player[key])
+PRINT(player.lives)
+player.lives = 3
+PRINT(player)
+player.score = NULL
+PRINT(player)
+UNDEFINE(player.score)
+PRINT(player)
+t = ["a", "b", "c"]
+t[2] = "x"
+t[-1] = "z"
+t[4] = "d"
+PRINT(t)
+TRY { t[10] = "q" } FAIL e { PRINT(e.message) }
+TRY { t[0] = "q" } FAIL e { PRINT(e.message) }
+fruits = ["apple", "pear"]
+fruits += "orange"
+PRINT(fruits)
+INSERT(fruits, "kiwi", 1)
+PRINT(fruits)
+DROP(fruits, 2)
+PRINT(fruits)
+DROP(fruits, -1)
+PRINT(fruits)
+INSERT(fruits, "fig", -1)
+PRINT(fruits)
+INSERT(fruits, "lime", -2)
+PRINT(fruits)
+PRINT(LEN(fruits), LEN("Alex"), LEN(1234), LEN(-2.5))
+PRINT([1, 2] + [3, 4])
+x = ["a", "b"]
+PRINT(x + "x")
+PRINT("x" + x)
+PRINT(5 + x)
+PRINT("inventory: " + STR(x))
+TRY { DROP(x, 0) } FAIL e { PRINT(e.message) }
+PRINT(INSERT("Ale", "x", -1))
+PRINT(DROP("Alex", 1))
+y = INSERT(x, "c", 3)
+PRINT(y)
+PRINT(x)
+mixed = ["apple", name: "Alex", 42]
+PRINT(mixed)
+PRINT(KEYS(mixed))
+PRINT(player["Full Name"])
+player["Full Name"] = "Alex K"
+PRINT(player)

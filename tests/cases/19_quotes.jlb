@@ -1,0 +1,10 @@
+>> Double quotes are exact; single quotes use backslash codes
+PRINT("C:\games\new")
+PRINT('Line one\nLine two')
+PRINT('She said "hi"')
+PRINT('don\'t')
+PRINT("don't")
+PRINT("multi
+line")
+PRINT(['a"b', "x"])
+PRINT('tab\there')

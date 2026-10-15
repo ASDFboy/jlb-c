@@ -1,0 +1,23 @@
+>> GOTO and POINT
+tries = 0
+POINT retry
+tries += 1
+IF tries < 3 {
+    GOTO retry
+}
+PRINT("Done after " + tries + " tries")
+FUNC loop_test() {
+    n = 0
+    POINT top
+    n += 1
+    WHILE TRUE {
+        IF n < 4 { GOTO top }
+        BREAK
+    }
+    RETURN n
+}
+PRINT(loop_test())
+GOTO skip_it
+PRINT("this is skipped")
+POINT skip_it
+PRINT("after the jump")

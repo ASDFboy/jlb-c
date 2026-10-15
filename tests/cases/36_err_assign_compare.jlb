@@ -1,0 +1,2 @@
+score = 5
+IF score = 5 { PRINT("x") }

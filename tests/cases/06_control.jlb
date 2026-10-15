@@ -1,0 +1,56 @@
+>> IF / ELIF / ELSE, truth rules, WHILE, REPEAT, FOR
+score = 10
+IF score > 10 { PRINT("High") } ELIF score == 10 { PRINT("Exactly ten") } ELSE { PRINT("Low") }
+IF score < 5 {
+    PRINT("a")
+} ELSE IF score < 20 {
+    PRINT("b")
+} ELSEIF score < 30 {
+    PRINT("c")
+} ELSE {
+    PRINT("d")
+}
+IF "TRUE" { PRINT("text TRUE works") }
+IF NULL { PRINT("no") } ELSE { PRINT("NULL is false") }
+TRY { IF 2 { } } FAIL e { PRINT(e.message) }
+TRY { IF "true" { } } FAIL e { PRINT(e.message) }
+TRY { IF "" { } } FAIL e { PRINT(e.message) }
+n = 0
+WHILE n < 3 { n += 1 }
+PRINT(n)
+REPEAT 2 { PRINT("Hello") }
+REPEAT 0 { PRINT("never") }
+TRY { REPEAT -1 { } } FAIL e { PRINT(e.message) }
+TRY { REPEAT 2.5 { } } FAIL e { PRINT(e.message) }
+TRY { REPEAT "3" { } } FAIL e { PRINT(e.message) }
+r = []
+FOR i IN 1 TO 5 { r += i }
+PRINT(r)
+r = []
+FOR i IN 0 TO 10 STEP 2 { r += i }
+PRINT(r)
+r = []
+FOR i IN 5 TO 1 { r += i }
+PRINT(r)
+r = []
+FOR x IN 0 TO 1 STEP 0.25 { r += x }
+PRINT(r)
+r = []
+FOR x IN 0 TO 1 STEP 0.1 { r += x }
+PRINT(r)
+r = []
+FOR i IN 1 TO 10 {
+    IF i == 3 { SKIP }
+    IF i == 6 { BREAK }
+    r += i
+}
+PRINT(r)
+TRY { FOR i IN 1 TO 5 STEP 0 { } } FAIL e { PRINT(e.message) }
+t = ["apple", "pear", name: "Alex"]
+FOR value IN t { PRINT(value) }
+FOR key, value IN t { PRINT(key, value) }
+r = ""
+FOR c IN "Alex" { r = c + r }
+PRINT(r)
+FOR i, c IN "ab" { PRINT(i, c) }
+TRY { PRINT(i) } FAIL e { PRINT(e.message) }

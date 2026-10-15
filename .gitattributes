@@ -1,0 +1,4 @@
+*.ico binary
+*.exe binary
+*.jlb text eol=lf
+*.out text eol=lf

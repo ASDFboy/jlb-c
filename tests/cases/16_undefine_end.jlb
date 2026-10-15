@@ -1,0 +1,23 @@
+>> Running order, UNDEFINE and END
+score = 10
+UNDEFINE(score)
+TRY { PRINT(score) } FAIL e { PRINT(e.message) }
+FUNC greet() { PRINT("hi") }
+UNDEFINE(greet)
+TRY { greet() } FAIL e { PRINT(e.message) }
+t = [1, 2]
+UNDEFINE(t)
+TRY { PRINT(t) } FAIL e { PRINT(e.message) }
+TRY { early() } FAIL e { PRINT(e.message) }
+FUNC early() { RETURN 1 }
+PRINT(early())
+FUNC a() { RETURN b() }
+FUNC b() { RETURN "b" }
+PRINT(a())
+TRY { UNDEFINE(nothing_here) } FAIL e { PRINT(e.message) }
+FUNC stop_here() {
+    PRINT("stopping")
+    END
+}
+TRY { stop_here() } FAIL e { PRINT("END was caught?!") }
+PRINT("never")

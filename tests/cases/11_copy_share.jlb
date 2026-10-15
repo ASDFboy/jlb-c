@@ -1,0 +1,43 @@
+>> = copies, @= and @ share
+a = [1, 2, 3]
+b = a
+c @= a
+c += 4
+PRINT(a)
+PRINT(b)
+b[1] = 99
+PRINT(a)
+PRINT(b)
+player = [score: 0]
+FUNC add_bonus(@p) { p.score += 10 }
+add_bonus(player)
+PRINT(player.score)
+FUNC no_change(p) { p.score += 10 }
+no_change(player)
+PRINT(player.score)
+enemies = [[health: 30], [health: 50]]
+FOR enemy IN enemies { enemy.health -= 10 }
+PRINT(enemies)
+FOR @enemy IN enemies { enemy.health -= 10 }
+PRINT(enemies)
+FOR key, @value IN enemies { value.health = key }
+PRINT(enemies)
+s1 = "Alex"
+s2 = s1
+s3 @= s1
+s3[1] = "G"
+PRINT(s1, s2, s3)
+n1 = 5
+n2 @= n1
+n2 += 1
+PRINT(n1, n2)
+nested = [inv: ["sword"]]
+copy = nested
+copy.inv[1] = "axe"
+PRINT(nested)
+PRINT(copy)
+FUNC heal(@p, amount = 10) { p.health += amount }
+hero = [health: 50]
+heal(hero)
+heal(hero, 5)
+PRINT(hero)

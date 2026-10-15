@@ -1,0 +1,9 @@
+25 -25 2.5 1000 0.0015 255 -26
+can't convert "025" to a number
+can't convert " 25 " to a number
+can't convert "1,000" to a number
+can't convert ".5" to a number
+can't convert "" to a number
+255 1000 0.0015
+TRUE
+1 0

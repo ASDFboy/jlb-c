@@ -1,0 +1,18 @@
+>> TRY / FAIL, ERROR, and what err contains
+TRY {
+    x = NUM("hello")
+} FAIL err {
+    PRINT(err.message)
+    PRINT(err.line)
+    PRINT(err.file)
+}
+FUNC risky(n) {
+    IF n > 5 { ERROR("too big: " + n) }
+    RETURN n
+}
+TRY { risky(9) } FAIL e { PRINT(e.message) }
+PRINT(risky(2))
+score = 7
+TRY { y = 1 / 0 } FAIL e { PRINT(e.variables.score) }
+TRY { ERROR("caught") } FAIL e { PRINT(e) }
+PRINT("still running")

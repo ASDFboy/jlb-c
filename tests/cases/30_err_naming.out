@@ -1,0 +1,1 @@
+ERROR in 30_err_naming.jlb, line 1: "playerScore" should be "player_score" (your own names are lowercase with underscores)

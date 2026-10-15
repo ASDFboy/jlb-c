@@ -1,0 +1,6 @@
+>> INPUT always gives text (23_input.in is fed in as typed input)
+name = INPUT("Name? ")
+PRINT("Hi " + name)
+age = INPUT("Age? ")
+PRINT(age + 1)
+PRINT(NUM(age) + 1)

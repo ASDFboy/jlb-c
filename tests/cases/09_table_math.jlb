@@ -1,0 +1,17 @@
+>> Text tricks carried over to tables, and sorting
+PRINT([1, 2] * 2)
+PRINT([1, 2, 3] * -1)
+PRINT([1, 2, 3] * -2)
+PRINT([1, 2] * 0)
+PRINT([1, 2, 3, 4] - 2)
+PRINT([1, 2] - 20)
+PRINT([1, 2] - -2)
+PRINT(["a", "b", "a"] - "a")
+PRINT([[1, 2], [3]] - [1, 2])
+PRINT([1, 2, name: "x"] * -1)
+TRY { PRINT([1, 2] * 2.5) } FAIL e { PRINT(e.message) }
+PRINT(SORT([40, 10, 30]))
+PRINT(SORT([40, 10, 30]) * -1)
+PRINT(SORT(["pear", "fig", "apple"]))
+PRINT(ALPHA_SORT(["pear", "fig", "apple"]))
+TRY { SORT([1, "x"]) } FAIL e { PRINT(e.message) }

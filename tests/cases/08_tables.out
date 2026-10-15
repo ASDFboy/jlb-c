@@ -1,0 +1,36 @@
+apple
+orange
+pear
+NULL
+NULL
+Alex
+Alex
+10
+NULL
+[name: "Alex", score: 10, lives: 3]
+[name: "Alex", score: NULL, lives: 3]
+[name: "Alex", lives: 3]
+["a", "x", "z", "d"]
+position 10 is past the end of the table (it has 4 items)
+positions start at 1, so [0] can't be written to
+["apple", "pear", "orange"]
+["kiwi", "apple", "pear", "orange"]
+["kiwi", "pear", "orange"]
+["kiwi", "pear"]
+["kiwi", "pear", "fig"]
+["kiwi", "pear", "lime", "fig"]
+4 4 4 4
+[[1, 2], [3, 4]]
+["a", "b", "x"]
+["x", "a", "b"]
+[5, "a", "b"]
+inventory: ["a", "b"]
+DROP: position 0 doesn't exist (there are 2 items)
+Alex
+lex
+["a", "b", "c"]
+["a", "b", "c"]
+["apple", 42, name: "Alex"]
+[1, 2, "name"]
+NULL
+[name: "Alex", lives: 3, "Full Name": "Alex K"]

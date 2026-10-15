@@ -1,0 +1,28 @@
+>> Math operators, roots, long division, order of operations
+PRINT(2 ^ 3)
+PRINT(2 ^ 3 ^ 2)
+PRINT(-2 ^ 2)
+PRINT(9 !^ 2)
+PRINT(27 !^ 3)
+PRINT(-27 !^ 3)
+PRINT(7 % 3)
+PRINT(7 !% 3)
+PRINT(7.5 % 2)
+PRINT(7.5 !% 2)
+PRINT(-7 !% 2)
+PRINT(-7 % 2)
+PRINT(2 + 3 * 4)
+PRINT(NULL + 1)
+PRINT(NULL * 5)
+PRINT(NULL - 1)
+n = 10
+n ^= 2; PRINT(n)
+n !^= 2; PRINT(n)
+n %= 3; PRINT(n)
+n = 17
+n !%= 5; PRINT(n)
+PRINT(0x1F + 1e3)
+TRY { PRINT(5 / 0) } FAIL e { PRINT(e.message) }
+PRINT(-9 !^ 2)
+TRY { PRINT((-9) !^ 2) } FAIL e { PRINT(e.message) }
+TRY { PRINT(5 % 0) } FAIL e { PRINT(e.message) }

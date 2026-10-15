@@ -1,0 +1,9 @@
+>> Number formats in text and in code
+PRINT(NUM("25"), NUM("-25"), NUM("2.5"), NUM("1e3"), NUM("1.5e-3"), NUM("0xff"), NUM("-0x1A"))
+FOR s IN ["025", " 25 ", "1,000", ".5", ""] {
+    TRY { NUM(s) } FAIL e { PRINT(e.message) }
+}
+x = 0xFF
+PRINT(x, 1e3, 1.5e-3)
+PRINT(2.0 === 2)
+PRINT(NUM(TRUE), NUM(NULL))

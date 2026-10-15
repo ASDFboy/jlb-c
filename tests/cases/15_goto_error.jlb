@@ -1,0 +1,4 @@
+FUNC f() {
+    GOTO nowhere
+}
+f()

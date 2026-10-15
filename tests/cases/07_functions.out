@@ -1,0 +1,25 @@
+inside: 4
+4
+3
+15
+10
+bonus isn't defined
+42
+outer isn't running, so its local variables don't exist right now
+Hi, Alex
+Hello, Alex
+Hi, Alex
+name is required (it's an input of greet)
+greet takes at most 2 inputs, but got 3
+6
+0
+hi
+hi
+hi
+10
+FUNC say_hi
+FUNC
+3628800
+NULL
+NULL
+5

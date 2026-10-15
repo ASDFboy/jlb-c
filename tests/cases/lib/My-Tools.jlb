@@ -1,0 +1,2 @@
+factor = 2
+FUNC double(x) { RETURN x * factor }

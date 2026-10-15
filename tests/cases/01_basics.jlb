@@ -1,0 +1,19 @@
+>> Basics: printing, variables, comments, numbers
+PRINT("Hello, world!")
+score = 10
+score += 5
+PRINT(score)
+value = 10
+value = "hello"
+PRINT(value)
+a = 1; b = 2; PRINT(a + b)
+>>> a multi-line
+comment <<<
+PRINT(">>> not a comment")   >> trailing comment
+PRINT(5 / 2)
+PRINT(2.0)
+PRINT(5 / 2.5)
+PRINT(0.1 + 0.2)
+PRINT(TYPE(5), TYPE("x"), TYPE(TRUE), TYPE(NULL), TYPE([1]), TYPE(PRINT))
+PRINT()
+PRINT(TRUE, FALSE, NULL)

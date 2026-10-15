@@ -1,0 +1,23 @@
+>> Logic: one symbol stops early, two symbols always check both sides
+FUNC check(label) { PRINT("checked " + label); RETURN TRUE }
+PRINT(FALSE & check("a"))
+PRINT(FALSE && check("b"))
+PRINT(TRUE | check("c"))
+PRINT(TRUE || check("d"))
+PRINT(TRUE !& FALSE)
+PRINT(TRUE !& TRUE)
+PRINT(FALSE !| FALSE)
+PRINT(TRUE !| FALSE)
+PRINT(TRUE ~ FALSE)
+PRINT(TRUE ~ TRUE)
+PRINT(TRUE !~ TRUE)
+PRINT(1 & 0)
+PRINT(!0)
+PRINT("TRUE" | 0)
+PRINT(!NULL)
+enemy = NULL
+IF enemy !== NULL & enemy.health > 0 { PRINT("attack") } ELSE { PRINT("no enemy") }
+a = TRUE; b = FALSE; c = FALSE
+PRINT(a | b & c)
+PRINT((a | b) & c)
+TRY { PRINT(!5) } FAIL e { PRINT(e.message) }

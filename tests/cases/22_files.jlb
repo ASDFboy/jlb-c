@@ -1,0 +1,9 @@
+>> Files (the test runner runs this in an empty temporary folder)
+PRINT(EXISTS("scratch.txt"))
+WRITE("scratch.txt", 'line1\nline2')
+PRINT(EXISTS("scratch.txt"))
+PRINT(READ("scratch.txt"))
+PRINT(READ_LINES("scratch.txt"))
+WRITE("scratch.txt", [1, 2])
+PRINT(READ("scratch.txt"))
+TRY { READ("missing.txt") } FAIL e { PRINT(LEN(e.message) > 0) }

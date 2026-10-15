@@ -1,0 +1,8 @@
+>> IMPORT puts names in directly; LOAD keeps them under the file's name
+IMPORT "lib/helpers.jlb"
+IMPORT "lib/helpers.jlb"
+PRINT(greet("Alex"))
+PRINT(greeting)
+LOAD "lib/My-Tools.jlb"
+PRINT(my_tools.double(21))
+PRINT(my_tools.factor)

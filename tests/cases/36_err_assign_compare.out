@@ -1,0 +1,1 @@
+ERROR in 36_err_assign_compare.jlb, line 2: = assigns a value; use == to compare

@@ -1,0 +1,10 @@
+ERROR in 13_crash.jlb, line 5: can't convert "hello" to a number
+
+Called from:
+    load_save()   line 5
+    start_game()  line 9
+
+Variables:
+    load_save:  file = "save.txt", data = "hello"
+    start_game: tries = 1
+    outside:    score = 10, lives = 3

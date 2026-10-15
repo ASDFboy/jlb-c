@@ -1,0 +1,1 @@
+ERROR in 34_err_leading_zero.jlb, line 1: numbers can't start with 0 (like 025)

@@ -1,0 +1,12 @@
+score = 10
+lives = 3
+FUNC load_save(file) {
+    data = "hello"
+    RETURN NUM(data)
+}
+FUNC start_game() {
+    tries = 1
+    RETURN load_save("save.txt")
+}
+start_game()
+PRINT("never printed")

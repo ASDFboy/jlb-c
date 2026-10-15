@@ -1,0 +1,3 @@
+greeting = "Hello"
+FUNC greet(name) { RETURN greeting + ", " + name }
+PRINT("helpers loaded")

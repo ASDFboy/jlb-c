@@ -1,0 +1,21 @@
+>> Long statements across lines
+player = [name: "Alex",
+          score: 10,
+          lives: 3]
+PRINT(player.lives)
+score = 20
+lives = 1
+IF score > 10 &
+   lives > 0 {
+    PRINT("ok")
+}
+total = 1 +
+    2 +
+    3
+PRINT(total)
+FUNC run(f) { RETURN f() }
+PRINT(run(FUNC() {
+    a = 1
+    b = 2
+    RETURN a + b
+}))

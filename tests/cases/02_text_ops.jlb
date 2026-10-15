@@ -1,0 +1,30 @@
+>> Text is always text: + joins, * repeats, - trims, / is an error
+PRINT("25" + 2)
+PRINT(2 + "25")
+PRINT("12" + "3")
+PRINT("25" * 2)
+PRINT(2 * "25")
+PRINT("abc" * -1)
+PRINT("abc" * -2)
+PRINT("[" + "hi" * 0 + "]")
+PRINT("[" + ("25" - 2) + "]")
+PRINT("hello" - 2)
+PRINT("[" + ("hello" - 20) + "]")
+PRINT("hello" - -2)
+PRINT("hello world" - "o")
+PRINT(NUM("25") * 2)
+PRINT(STR(25) + STR(2))
+PRINT("Score: " + NULL + "!")
+text = "hi"
+text *= 2
+PRINT(text)
+value = "25"
+PRINT(value * 2)
+result = NUM(value) * 2
+PRINT(result)
+PRINT(value)
+TRY { x = "hi" * 2.5 } FAIL e { PRINT(e.message) }
+TRY { x = "25" * "2" } FAIL e { PRINT(e.message) }
+TRY { x = "25" / 2 } FAIL e { PRINT(e.message) }
+TRY { x = "hello" - 1.5 } FAIL e { PRINT(e.message) }
+TRY { x = 2 - "25" } FAIL e { PRINT(e.message) }
