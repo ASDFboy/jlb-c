@@ -39,6 +39,8 @@ Hello, Sam!
 | `jlb-c --repl` | starts a Quick-try session for an editor |
 | `jlb-c --version` | shows the version |
 
+A program whose first line is `>> @interpreter rust` is handed to jlb (the Rust interpreter) when it's in the same folder; see [Choosing the interpreter](https://github.com/ASDFboy/jlb-rust/blob/main/docs/09-programs-and-files.md#choosing-the-interpreter).
+
 The editor modes (`--check`, `--ide` and `--repl`) are described in [jlb-rust's guide](https://github.com/ASDFboy/jlb-rust/blob/main/docs/09-programs-and-files.md#editor-modes). jlb-c offers all of them except `--debug`, so JLB IDE's step-by-step debugger uses the Rust interpreter.
 
 On Windows, a double-clicked program keeps its window open until you press Enter. To make .jlb files run when double-clicked, right-click one, choose **Open with → Choose another app**, browse to `jlb-c.exe` and tick **Always** (or use jlb-rust's [one-click setup](https://github.com/ASDFboy/jlb-rust#windows-quickest), which sets up the Rust interpreter).
@@ -76,6 +78,7 @@ cc -O2 -std=c11 -D_DEFAULT_SOURCE -D_POSIX_C_SOURCE=200809L -o jlb-c src/*.c -lm
 | `src/ops.c` | operators and the truth rules |
 | `src/interp.c` | running the tree: variables, loops, functions, `TRY`, `GOTO`, `IMPORT` and `LOAD` |
 | `src/builtins.c` | the ALL CAPS commands |
+| `src/tasks.c` | tasks (`START`, `AWAIT`, `DONE`, `CANCEL`): each on its own thread, taking turns with the same rules as jlb-rust |
 | `src/ide.c` | the editor modes |
 | `src/main.c` | the command line |
 

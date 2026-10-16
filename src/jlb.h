@@ -106,7 +106,9 @@ typedef struct ErrorInfo {
     VarList outside;
 } ErrorInfo;
 
-enum { FAULT_NONE, FAULT_ERROR, FAULT_END };
+/// FAULT_CANCELLED: the task was stopped with CANCEL and unwinds. FAULT_TASK_ERROR: an
+/// error in a task that nothing was AWAITing; it stops the program and TRY doesn't catch it.
+enum { FAULT_NONE, FAULT_ERROR, FAULT_END, FAULT_CANCELLED, FAULT_TASK_ERROR };
 
 /// The current error. A function that fails sets this and returns false (or -1).
 extern int g_fault;
@@ -202,7 +204,7 @@ typedef struct Table Table;
 typedef struct Function Function;
 typedef struct Slot Slot;
 
-typedef enum { V_NULL, V_NUM, V_TEXT, V_BOOL, V_TABLE, V_FUNC, V_BUILTIN } VType;
+typedef enum { V_NULL, V_NUM, V_TEXT, V_BOOL, V_TABLE, V_FUNC, V_BUILTIN, V_TASK } VType;
 
 struct Value {
     VType t;
@@ -216,12 +218,17 @@ struct Value {
         } tb;
         Function *fn;
         int bi; // which built-in command
+        struct {
+            Str *name;
+            int id;
+        } task; // a function running side by side (START)
     };
 };
 
 /// A variable or table entry. `@` sharing makes two names point at the same slot.
 struct Slot {
     int rc;
+    bool constant; // made by CONST: nothing in it can change
     Value v;
 };
 
@@ -286,6 +293,8 @@ bool v_is_func(Value v);
 uint64_t new_id(void);
 
 Slot *slot_new(Value v); // takes v
+/// A constant slot with a frozen copy of v: tables inside get constant slots of their own.
+Slot *slot_const(Value v); // takes v
 static inline Slot *slot_ref(Slot *s) {
     s->rc++;
     return s;
@@ -389,7 +398,8 @@ typedef struct {
 
 typedef enum {
     E_NUM, E_TEXT, E_BOOL, E_NULL, E_VAR, E_BUILTIN, E_TABLE, E_FIELD, E_INDEX, E_SLICE, E_CALL,
-    E_NEG, E_NOT, E_BINARY, E_FUNC, E_UNDEFINE, E_INSERT, E_DROP
+    E_NEG, E_NOT, E_BINARY, E_FUNC, E_UNDEFINE, E_INSERT, E_DROP,
+    E_START // START f(x): x is the call
 } ExprKind;
 
 struct Expr {
@@ -421,7 +431,7 @@ struct FuncDecl {
 };
 
 typedef enum {
-    S_EXPR, S_ASSIGN, S_LOCAL, S_IF, S_WHILE, S_REPEAT, S_FOR_IN, S_FOR_TO, S_BREAK, S_SKIP,
+    S_EXPR, S_ASSIGN, S_LOCAL, S_CONST, S_IF, S_WHILE, S_REPEAT, S_FOR_IN, S_FOR_TO, S_BREAK, S_SKIP,
     S_RETURN, S_END, S_FUNC, S_TRY, S_GOTO, S_POINT, S_IMPORT, S_LOAD
 } StmtKind;
 
@@ -493,6 +503,13 @@ typedef struct Interp {
     Value ret;
     Str *goto_name;
     int goto_line;
+    // Tasks (see tasks.c): none until the first START. Task 0 is the program itself.
+    struct Task *tasks;
+    int ntasks, tcap;
+    int current;       // which task is running
+    unsigned steps;    // statements it has run this turn
+    int task_fault;    // an error (or END) from a task, waiting for the program's own code
+    ErrorInfo *task_err;
 } Interp;
 
 typedef enum { F_ERR = -1, F_NORMAL = 0, F_BREAK, F_SKIP, F_RETURN, F_GOTO } Flow;
@@ -516,6 +533,25 @@ void json_str(Buf *b, const char *s);
 char *report_json(const ErrorInfo *e);
 
 int run_check(const char *target);
+
+// ---------- tasks (tasks.c) ----------
+
+/// START: runs func with its inputs (takes the slots) as a new task.
+bool task_start(Interp *it, Function *func, Slot **vals, int nvals, int line, Value *out);
+/// Counts a statement; every so many, the next task gets a turn.
+bool task_tick(Interp *it);
+bool task_sleep(Interp *it, double secs);
+bool task_await(Interp *it, Value v, Value *out);
+bool task_done(Interp *it, Value v, bool *out);
+bool task_cancel(Interp *it, Value v);
+/// The program's own code has ended: lets its tasks finish.
+bool tasks_finish(Interp *it);
+/// After an error in Quick-try: stops every task still going.
+void tasks_cancel_all(Interp *it);
+/// Frames and calls, for tasks.c.
+void frame_push(Interp *it, Function *f, Env *env, int line, Source *src);
+void frame_pop(Interp *it);
+bool call_prepared(Interp *it, Function *func, Slot **vals, int nvals, Value *out);
 int run_repl(void);
 
 #endif

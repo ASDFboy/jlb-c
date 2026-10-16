@@ -64,6 +64,7 @@ Value v_retain(Value v) {
     case V_TEXT: v.s->rc++; break;
     case V_TABLE: v.tb.tab->rc++; break;
     case V_FUNC: v.fn->rc++; break;
+    case V_TASK: v.task.name->rc++; break;
     default: break;
     }
     return v;
@@ -75,6 +76,7 @@ void v_release(Value v) {
     case V_TEXT: str_unref(v.s); break;
     case V_TABLE: table_unref(v.tb.tab); break;
     case V_FUNC: func_unref(v.fn); break;
+    case V_TASK: str_unref(v.task.name); break;
     default: break;
     }
 }
@@ -91,6 +93,7 @@ const char *v_type(Value v) {
     case V_BOOL: return "BOOL";
     case V_NULL: return "NULL";
     case V_TABLE: return "TABLE";
+    case V_TASK: return "TASK";
     default: return "FUNC";
     }
 }
@@ -102,7 +105,25 @@ bool v_is_func(Value v) {
 Slot *slot_new(Value v) {
     Slot *s = xmalloc(sizeof(Slot));
     s->rc = 1;
+    s->constant = false;
     s->v = v;
+    return s;
+}
+
+static Value freeze(Value v) {
+    if (v.t != V_TABLE) return v;
+    Table *src = v.tb.tab;
+    Table *t = table_new();
+    for (size_t i = 0; i < src->n; i++) table_push_slot(t, slot_const(v_retain(src->items[i]->v)));
+    for (size_t i = 0; i < src->named.n; i++) om_insert(&t->named, src->named.e[i].key, slot_const(v_retain(src->named.e[i].slot->v)));
+    if (src->report) t->report = str_ref(src->report);
+    v_release(v);
+    return v_table(t);
+}
+
+Slot *slot_const(Value v) {
+    Slot *s = slot_new(freeze(v));
+    s->constant = true;
     return s;
 }
 
@@ -375,6 +396,10 @@ void write_value(Buf *b, Value v, bool quote, int depth) {
         }
         break;
     case V_BUILTIN: buf_puts(b, WORDS[v.bi]); break;
+    case V_TASK:
+        buf_puts(b, "TASK ");
+        buf_puts(b, v.task.name->s);
+        break;
     case V_TABLE: {
         Table *t = v.tb.tab;
         if (t->report) {

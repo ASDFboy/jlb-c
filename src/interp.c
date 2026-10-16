@@ -220,7 +220,22 @@ static Str *splice_text(Str *s, size_t i, size_t remove, const char *rep, size_t
 }
 
 /// Sets an entry (takes v).
+/// Nothing held by a constant (made with CONST) can change.
+static bool not_const(const Slot *bs) {
+    if (bs->constant) return fail("this is a constant (CONST), so it can't be changed");
+    return true;
+}
+
+static bool const_name(const Slot *s, const Str *name) {
+    if (s->constant) return fail("%s is a constant (CONST), so it can't be changed", name->s);
+    return true;
+}
+
 static bool set_entry(Slot *bs, const Key *key, Value v) {
+    if (!not_const(bs)) {
+        v_release(v);
+        return false;
+    }
     Value *b = &bs->v;
     switch (b->t) {
     case V_TABLE: {
@@ -228,6 +243,10 @@ static bool set_entry(Slot *bs, const Key *key, Value v) {
         if (key->is_name) {
             Slot *s = om_gets(&t->named, key->name);
             if (s) {
+                if (!not_const(s)) {
+                    v_release(v);
+                    return false;
+                }
                 v_release(s->v);
                 s->v = v;
             } else {
@@ -238,6 +257,10 @@ static bool set_entry(Slot *bs, const Key *key, Value v) {
         size_t len = t->n;
         long i = resolve(key->pos, len);
         if (i >= 0) {
+            if (!not_const(t->items[i])) {
+                v_release(v);
+                return false;
+            }
             v_release(t->items[i]->v);
             t->items[i]->v = v;
             return true;
@@ -277,6 +300,10 @@ static bool set_entry(Slot *bs, const Key *key, Value v) {
 
 /// Puts a shared slot in an entry (takes the slot).
 static bool set_entry_slot(Slot *bs, const Key *key, Slot *sh) {
+    if (!not_const(bs)) {
+        slot_unref(sh);
+        return false;
+    }
     Value *b = &bs->v;
     if (b->t != V_TABLE) {
         slot_unref(sh);
@@ -447,6 +474,10 @@ static void create_var(Interp *it, Str *name, Slot *s) {
 bool set_var(Interp *it, Str *name, Value v) {
     Slot *s = lookup(it, name);
     if (s) {
+        if (!const_name(s, name)) {
+            v_release(v);
+            return false;
+        }
         v_release(s->v);
         s->v = v;
     } else {
@@ -455,19 +486,37 @@ bool set_var(Interp *it, Str *name, Value v) {
     return true;
 }
 
-static void bind_var(Interp *it, Str *name, Slot *s) {
+/// Points a name at a slot (takes the slot).
+static bool bind_var(Interp *it, Str *name, Slot *s) {
+    Slot *old = lookup(it, name);
+    if (old && !const_name(old, name)) {
+        slot_unref(s);
+        return false;
+    }
     Frame *f = top(it);
     for (int i = f->scopes.n; i-- > 0;) {
         if (om_gets(&f->scopes.s[i], name)) {
             om_insert(&f->scopes.s[i], name, s);
-            return;
+            return true;
         }
     }
     if (om_gets(&f->env->map, name)) {
         om_insert(&f->env->map, name, s);
-        return;
+        return true;
     }
     create_var(it, name, s);
+    return true;
+}
+
+/// CONST name = value: a new name in this function (or file) that never changes (takes v).
+static bool make_const(Interp *it, Str *name, Value v) {
+    Frame *f = top(it);
+    if (om_gets(f->func ? &f->scopes.s[0] : &f->env->map, name)) {
+        v_release(v);
+        return fail("%s already has a value here, so CONST can't make it a constant. Use CONST where %s first gets its value", name->s, name->s);
+    }
+    create_var(it, name, slot_const(v));
+    return true;
 }
 
 static bool remove_var(Interp *it, const Str *name) {
@@ -519,6 +568,7 @@ static Value make_func(Interp *it, FuncDecl *d) {
 
 static Flow exec_block(Interp *it, const Block *b);
 static bool eval(Interp *it, Expr *e, Value *out);
+static bool start(Interp *it, Expr *call, Value *out);
 static bool assign(Interp *it, Expr *target, Op op, Expr *rhs);
 static Flow for_to(Interp *it, Stmt *s);
 static Flow for_in(Interp *it, Stmt *s);
@@ -535,6 +585,11 @@ static Flow exec_kind(Interp *it, Stmt *s);
 
 static Flow exec_stmt(Interp *it, Stmt *s) {
     top(it)->line = s->line;
+    // With tasks running, each one gets a turn every so many statements.
+    if (it->ntasks && !task_tick(it)) {
+        capture(it, s->line);
+        return F_ERR;
+    }
     Flow f = exec_kind(it, s);
     if (f == F_ERR) capture(it, s->line);
     return f;
@@ -586,6 +641,11 @@ static Flow exec_kind(Interp *it, Stmt *s) {
         return F_NORMAL;
     }
     case S_ASSIGN: return assign(it, s->e, s->op, s->e2) ? F_NORMAL : F_ERR;
+    case S_CONST: {
+        Value v;
+        if (!eval(it, s->e, &v)) return F_ERR;
+        return make_const(it, s->name, v) ? F_NORMAL : F_ERR;
+    }
     case S_LOCAL: {
         Value v = NULL_VALUE;
         if (s->e) {
@@ -656,7 +716,7 @@ static Flow exec_kind(Interp *it, Stmt *s) {
     case S_END:
         g_fault = FAULT_END;
         return F_ERR;
-    case S_FUNC: set_var(it, s->fn->name, make_func(it, s->fn)); return F_NORMAL;
+    case S_FUNC: return set_var(it, s->fn->name, make_func(it, s->fn)) ? F_NORMAL : F_ERR;
     case S_TRY: {
         Flow f = exec_block(it, &s->body);
         if (f != F_ERR || g_fault != FAULT_ERROR) return f;
@@ -823,7 +883,8 @@ static LoopEntry *loop_entries(Interp *it, Expr *iter, bool want_slots, size_t *
         Slot *s;
         if (!lvalue_slot(it, iter, &s)) return NULL;
         if (s->v.t == V_TABLE) {
-            Table *t = table_mut(&s->v);
+            // A constant's entries are constants too, so they're shared as they are.
+            Table *t = s->constant ? s->v.tb.tab : table_mut(&s->v);
             LoopEntry *r = table_entries(t, n);
             slot_unref(s);
             return r;
@@ -916,7 +977,8 @@ static bool entry_slot(Interp *it, Slot *bs, const Key *key, Slot **out) {
     Value *v = &bs->v;
     switch (v->t) {
     case V_TABLE: {
-        Table *t = table_mut(v);
+        // Nothing to copy first in a constant: nothing in it changes.
+        Table *t = bs->constant ? v->tb.tab : table_mut(v);
         if (key->is_name) {
             Slot *s = om_gets(&t->named, key->name);
             if (!s) return fail("the table has no entry named %s", key->name->s);
@@ -1003,6 +1065,10 @@ static bool compound(Slot *slot, Op op, Value r) {
     case OP_REM_SET: base = OP_REM; break;
     default: base = OP_QUOT; break;
     }
+    if (!not_const(slot)) {
+        v_release(r);
+        return false;
+    }
     // Fast path: `table += value` adds to the end in place.
     if (base == OP_ADD && r.t != V_TABLE && slot->v.t == V_TABLE) {
         Table *t = table_mut(&slot->v);
@@ -1044,7 +1110,10 @@ static bool assign_entry(Interp *it, Slot *bs, const Key *key, Op op, Expr *rhs)
             return false;
         }
         bool ok = true;
-        if (op == OP_SET || op == OP_SHARE_SET) {
+        if (s->constant) {
+            v_release(v);
+            ok = const_name(s, key->name);
+        } else if (op == OP_SET || op == OP_SHARE_SET) {
             v_release(s->v);
             s->v = v_copy(v);
         } else {
@@ -1080,8 +1149,7 @@ static bool assign(Interp *it, Expr *target, Op op, Expr *rhs) {
         if (op == OP_SHARE_SET) {
             Slot *s;
             if (!share_slot(it, rhs, &s)) return false;
-            bind_var(it, n, s);
-            return true;
+            return bind_var(it, n, s);
         }
         if (op == OP_SET) {
             Value v;
@@ -1090,6 +1158,7 @@ static bool assign(Interp *it, Expr *target, Op op, Expr *rhs) {
         }
         Slot *slot = lookup(it, n);
         if (!slot) return fail("%s isn't defined", n->s);
+        if (!const_name(slot, n)) return false;
         slot_ref(slot);
         Value r;
         if (!eval(it, rhs, &r)) {
@@ -1146,6 +1215,7 @@ static bool remove_entry(Interp *it, Slot *bs, const Key *key) {
         }
         return fail("%s has no local variable named %s", fname(f), key->name->s);
     }
+    if (!not_const(bs)) return false;
     Value *v = &bs->v;
     if (v->t != V_TABLE) return fail("a %s has no entries to UNDEFINE", v_type(*v));
     Table *t = table_mut(v);
@@ -1163,9 +1233,12 @@ static bool remove_entry(Interp *it, Slot *bs, const Key *key) {
 
 static bool undefine(Interp *it, Expr *t) {
     switch (t->k) {
-    case E_VAR:
+    case E_VAR: {
+        Slot *old = lookup(it, t->name);
+        if (old && !const_name(old, t->name)) return false;
         if (remove_var(it, t->name)) return true;
         return fail("%s isn't defined, so it can't be UNDEFINEd", t->name->s);
+    }
     case E_FIELD: {
         Slot *bs;
         if (!lvalue_slot(it, t->x, &bs)) return false;
@@ -1357,7 +1430,7 @@ static bool action(Interp *it, bool insert, Expr **args, int nargs, Value *out) 
         Slot *s;
         ok = lvalue_slot(it, args[0], &s);
         if (ok) {
-            ok = apply_action(&s->v, insert, extra);
+            ok = not_const(s) && apply_action(&s->v, insert, extra);
             if (ok) *out = v_copy(v_retain(s->v));
             slot_unref(s);
         }
@@ -1494,6 +1567,7 @@ static bool eval(Interp *it, Expr *e, Value *out) {
     }
     case E_BINARY: return binary(it, e, out);
     case E_FUNC: *out = make_func(it, e->fn); return true;
+    case E_START: return start(it, e->x, out);
     case E_UNDEFINE:
         if (!undefine(it, e->x)) return false;
         *out = NULL_VALUE;
@@ -1551,10 +1625,13 @@ static bool run_call(Interp *it, Function *func, Slot **vals, int nvals, Value *
     return true;
 }
 
-static bool call_func(Interp *it, Function *func, Expr **args, int nargs, Value *out) {
+/// A call's inputs: copies, or shared slots for @ inputs (the caller unrefs them and frees the list).
+static bool call_args(Interp *it, Function *func, Expr **args, int nargs, Slot ***vals_out, int *n_out) {
     FuncDecl *d = func->decl;
     bool has_rest = d->nparams && d->params[d->nparams - 1].rest;
     int fixed = d->nparams - (has_rest ? 1 : 0);
+    *vals_out = NULL;
+    *n_out = 0;
     if (nargs > fixed && !has_rest) return fail("%s takes at most %d input%s, but got %d", fname(func), fixed, fixed == 1 ? "" : "s", nargs);
     Slot **vals = xmalloc((size_t)(nargs ? nargs : 1) * sizeof(Slot *));
     int n = 0;
@@ -1575,6 +1652,15 @@ static bool call_func(Interp *it, Function *func, Expr **args, int nargs, Value 
         }
         n++;
     }
+    *vals_out = vals;
+    *n_out = n;
+    return ok;
+}
+
+static bool call_func(Interp *it, Function *func, Expr **args, int nargs, Value *out) {
+    Slot **vals;
+    int n;
+    bool ok = call_args(it, func, args, nargs, &vals, &n);
     if (ok && it->nframes >= MAX_DEPTH) ok = fail("too many function calls inside each other (is a function calling itself forever?)");
     if (ok) {
         int line = top(it)->line;
@@ -1585,6 +1671,43 @@ static bool call_func(Interp *it, Function *func, Expr **args, int nargs, Value 
     }
     for (int i = 0; i < n; i++) slot_unref(vals[i]);
     free(vals);
+    return ok;
+}
+
+// For tasks.c: a task's first call, made in its own frame list.
+void frame_push(Interp *it, Function *f, Env *env, int line, Source *src) {
+    push_frame(it, f, env, line, src);
+    scopes_push(&top(it)->scopes);
+}
+
+void frame_pop(Interp *it) {
+    pop_frame(it);
+}
+
+bool call_prepared(Interp *it, Function *func, Slot **vals, int nvals, Value *out) {
+    return run_call(it, func, vals, nvals, out);
+}
+
+/// START f(x): works out f and its inputs here, then runs it as a task.
+static bool start(Interp *it, Expr *call, Value *out) {
+    Value f;
+    if (!eval(it, call->x, &f)) return false;
+    if (f.t == V_BUILTIN) return fail("START runs your own functions, not built-in commands like %s", WORDS[f.bi]);
+    if (f.t != V_FUNC) {
+        bool r = fail("START needs a function, not a %s", v_type(f));
+        v_release(f);
+        return r;
+    }
+    Slot **vals;
+    int n;
+    if (!call_args(it, f.fn, call->args, call->nargs, &vals, &n)) {
+        for (int i = 0; i < n; i++) slot_unref(vals[i]);
+        free(vals);
+        v_release(f);
+        return false;
+    }
+    bool ok = task_start(it, f.fn, vals, n, top(it)->line, out);
+    v_release(f);
     return ok;
 }
 
@@ -1707,11 +1830,11 @@ static bool do_load(Interp *it, Str *p) {
         it->nloaded++;
     }
     Str *name = str_c(stem);
-    set_var(it, name, v_copy(v));
+    bool ok = set_var(it, name, v_copy(v));
     str_unref(name);
     free(stem);
     free(path);
-    return true;
+    return ok;
 }
 
 int run_main(Interp *it, const char *path) {
@@ -1721,10 +1844,11 @@ int run_main(Interp *it, const char *path) {
         it->imported = xrealloc(it->imported, (size_t)(it->nimported + 1) * sizeof(char *));
         it->imported[it->nimported++] = c;
     }
-    bool ok = run_module(it, path, env);
+    // When the program's own code ends, the tasks it started get to finish.
+    bool ok = run_module(it, path, env) && tasks_finish(it);
     env_unref(env);
     out_flush();
-    if (ok || g_fault == FAULT_END) {
+    if (ok || g_fault == FAULT_END || g_fault == FAULT_CANCELLED) {
         g_fault = FAULT_NONE;
         return 0;
     }
@@ -1752,7 +1876,27 @@ void start_session(Interp *it, const char *dir) {
     source_unref(src);
 }
 
+static int run_snippet_code(Interp *it, const char *text, Value *out);
+
 int run_snippet(Interp *it, const char *text, Value *out) {
+    // Tasks a snippet starts finish before its answer comes back.
+    int r = run_snippet_code(it, text, out);
+    if (r >= 0 && !tasks_finish(it)) {
+        if (r == 1) v_release(*out);
+        r = -1;
+    }
+    if (r < 0) {
+        // Stop what's left without losing this error.
+        int f = g_fault;
+        ErrorInfo *e = take_error();
+        tasks_cancel_all(it);
+        g_fault = f;
+        g_err = e;
+    }
+    return r;
+}
+
+static int run_snippet_code(Interp *it, const char *text, Value *out) {
     // Tidy up after an earlier error, which can leave loop scopes or calls behind.
     while (it->nframes > 1) pop_frame(it);
     scopes_free(&it->frames[0].scopes);

@@ -1,0 +1,28 @@
+CONST max_hp = 100
+CONST hero = [name: "Ann", bag: [1, 2]]
+PRINT(max_hp, hero)
+copy = hero
+copy.bag += 3
+PRINT(copy.bag, hero.bag)
+FOR @x IN copy.bag { x += 1 }
+PRINT(copy.bag)
+FUNC f() {
+    CONST inner = 5
+    RETURN inner + max_hp
+}
+PRINT(f(), f())
+s @= hero
+TRY { max_hp = 1 } FAIL e { PRINT(e.message) }
+TRY { max_hp += 1 } FAIL e { PRINT(e.message) }
+TRY { hero.name = "Bo" } FAIL e { PRINT(e.message) }
+TRY { hero.bag += 9 } FAIL e { PRINT(e.message) }
+TRY { s.bag[1] = 9 } FAIL e { PRINT(e.message) }
+TRY { FOR @b IN hero.bag { b = 0 } } FAIL e { PRINT(e.message) }
+TRY { UNDEFINE(max_hp) } FAIL e { PRINT(e.message) }
+TRY { max_hp @= copy } FAIL e { PRINT(e.message) }
+TRY { INSERT(hero.bag, 1, 0) } FAIL e { PRINT(e.message) }
+TRY { CONST max_hp = 3 } FAIL e { PRINT(e.message) }
+TRY { FUNC max_hp() { } } FAIL e { PRINT(e.message) }
+y = 1
+TRY { CONST y = 2 } FAIL e { PRINT(e.message) }
+PRINT(hero, max_hp)

@@ -745,7 +745,29 @@ bool call_builtin(Interp *it, int bi, Value *a, int n, Value *out) {
         double s = number_f64(name, a[0], &ok);
         if (!ok) return false;
         out_flush();
-        if (s > 0.0) sleep_seconds(s);
+        if (it->ntasks) {
+            // With tasks running, the others get to run meanwhile.
+            if (!task_sleep(it, s)) return false;
+        } else if (s > 0.0) {
+            sleep_seconds(s);
+        }
+        *out = NULL_VALUE;
+        return true;
+    }
+    if (IS("AWAIT")) {
+        if (!count(name, n, 1, 1)) return false;
+        return task_await(it, a[0], out);
+    }
+    if (IS("DONE")) {
+        if (!count(name, n, 1, 1)) return false;
+        bool d;
+        if (!task_done(it, a[0], &d)) return false;
+        *out = v_bool(d);
+        return true;
+    }
+    if (IS("CANCEL")) {
+        if (!count(name, n, 1, 1)) return false;
+        if (!task_cancel(it, a[0])) return false;
         *out = NULL_VALUE;
         return true;
     }

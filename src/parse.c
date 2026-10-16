@@ -26,7 +26,7 @@ static const Op LEVELS[][5] = {
 
 enum {
     KW_IF, KW_ELIF, KW_ELSEIF, KW_ELSE, KW_WHILE, KW_REPEAT, KW_FOR, KW_IN, KW_TO, KW_STEP, KW_BREAK, KW_SKIP,
-    KW_FUNC, KW_RETURN, KW_LOCAL, KW_TRY, KW_FAIL, KW_GOTO, KW_POINT, KW_IMPORT, KW_LOAD, KW_END, KW_TRUE,
+    KW_FUNC, KW_RETURN, KW_LOCAL, KW_CONST, KW_START, KW_TRY, KW_FAIL, KW_GOTO, KW_POINT, KW_IMPORT, KW_LOAD, KW_END, KW_TRUE,
     KW_FALSE, KW_NULL, KW_UNDEFINE, KW_INSERT, KW_DROP
 };
 
@@ -384,6 +384,19 @@ static Stmt *statement(Parser *p) {
             if (!s->e) return NULL;
         }
         return s;
+    case KW_CONST:
+        advance(p);
+        s = new_stmt(S_CONST, line);
+        s->name = expect_name(p, "a name after CONST");
+        if (!s->name) return NULL;
+        if (!is_op(p, OP_SET)) {
+            pfail(p, "CONST %s needs a value: CONST %s = ...", s->name->s, s->name->s);
+            return NULL;
+        }
+        advance(p);
+        s->e = expr(p);
+        if (!s->e) return NULL;
+        return s;
     case KW_TRY: {
         advance(p);
         s = new_stmt(S_TRY, line);
@@ -586,6 +599,18 @@ static Expr *unary(Parser *p) {
         if (!e) return NULL;
         Expr *u = new_expr(E_NOT);
         u->x = e;
+        return u;
+    }
+    if (is_kw(p, KW_START)) {
+        advance(p);
+        Expr *call = postfix(p);
+        if (!call) return NULL;
+        if (call->k != E_CALL) {
+            pfail(p, "START needs a function call after it, like START walk(hero)");
+            return NULL;
+        }
+        Expr *u = new_expr(E_START);
+        u->x = call;
         return u;
     }
     return power(p);

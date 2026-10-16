@@ -5,7 +5,7 @@
 const char *const WORDS[] = {
     // keywords
     "IF", "ELIF", "ELSEIF", "ELSE", "WHILE", "REPEAT", "FOR", "IN", "TO", "STEP", "BREAK", "SKIP",
-    "FUNC", "RETURN", "LOCAL", "TRY", "FAIL", "GOTO", "POINT", "IMPORT", "LOAD", "END", "TRUE",
+    "FUNC", "RETURN", "LOCAL", "CONST", "START", "TRY", "FAIL", "GOTO", "POINT", "IMPORT", "LOAD", "END", "TRUE",
     "FALSE", "NULL", "UNDEFINE", "INSERT", "DROP",
     // built-in commands
     "PRINT", "NUM", "STR", "ENG", "HEX", "LEN", "ERROR", "INPUT", "READ", "READ_LINES", "WRITE",
@@ -13,8 +13,9 @@ const char *const WORDS[] = {
     "LOWER", "SPLIT", "JOIN", "FIND", "ABS", "MIN", "MAX", "TABLE_MIN", "TABLE_MAX", "SIN", "COS",
     "TAN", "CSC", "SEC", "COT", "ASIN", "ACOS", "ATAN", "RAD_SIN", "RAD_COS", "RAD_TAN", "RAD_CSC",
     "RAD_SEC", "RAD_COT", "RAD_ASIN", "RAD_ACOS", "RAD_ATAN", "PI", "SORT", "ALPHA_SORT", "KEYS",
+    "AWAIT", "DONE", "CANCEL",
 };
-const int N_KEYWORDS = 28;
+const int N_KEYWORDS = 30;
 const int N_WORDS = (int)(sizeof WORDS / sizeof WORDS[0]);
 
 // Longest first, so "!===" wins over "!==" and so on (the same order as the Op enum).

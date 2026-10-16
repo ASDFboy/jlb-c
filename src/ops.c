@@ -425,6 +425,7 @@ static bool loose_eq_d(Value a, Value b, int d) {
     if (x == V_TABLE && y == V_TABLE) return a.tb.tab == b.tb.tab || tables_eq(a.tb.tab, b.tb.tab, d);
     if (x == V_FUNC && y == V_FUNC) return a.fn == b.fn;
     if (x == V_BUILTIN && y == V_BUILTIN) return a.bi == b.bi;
+    if (x == V_TASK && y == V_TASK) return a.task.id == b.task.id;
     return false;
 }
 
@@ -442,6 +443,7 @@ bool strict_eq(Value a, Value b) {
     case V_TABLE: return a.tb.id == b.tb.id;
     case V_FUNC: return a.fn == b.fn;
     case V_BUILTIN: return a.bi == b.bi;
+    case V_TASK: return a.task.id == b.task.id;
     }
     return false;
 }

@@ -1,0 +1,19 @@
+started 0
+a 150 150
+a 300 300
+a 450 450
+b 150 648
+b 300 798
+b 450 948
+a 600 1188
+a 750 1338
+a 900 1488
+b 600 1590
+["a", "b", "c"] 1690
+slept 0
+slept 0
+[0, 0]
+n!
+TRUE NULL
+caught boom
+main ends 1730
