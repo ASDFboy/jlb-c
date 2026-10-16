@@ -555,6 +555,7 @@ static char *read_line(void) {
 }
 
 bool call_builtin(Interp *it, int bi, Value *a, int n, Value *out) {
+    if (bi >= GFX_FIRST) return gfx_builtin(it, bi, a, n, out);
     const char *name = WORDS[bi];
 #define IS(s) (strcmp(name, s) == 0)
     if (IS("PRINT")) {

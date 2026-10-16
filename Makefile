@@ -3,11 +3,11 @@
 
 CC ?= cc
 CFLAGS ?= -O2 -Wall -Wextra -Wno-unused-parameter -std=c11 -D_DEFAULT_SOURCE -D_POSIX_C_SOURCE=200809L
-SRC := $(wildcard src/*.c)
-HDR := $(wildcard src/*.h)
+SRC := $(wildcard src/*.c) $(wildcard src/gfx/*.c)
+HDR := $(wildcard src/*.h) $(wildcard src/gfx/*.h)
 
 jlb-c: $(SRC) $(HDR)
-	$(CC) $(CFLAGS) -o $@ $(SRC) -lm -lpthread
+	$(CC) $(CFLAGS) -o $@ $(SRC) -lm -lpthread -ldl
 
 WIN_CC ?= x86_64-w64-mingw32-gcc
 WINDRES ?= x86_64-w64-mingw32-windres
@@ -16,7 +16,7 @@ windows/jlb-c.exe: $(SRC) $(HDR) windows/jlb.ico
 	mkdir -p build
 	printf '1 ICON "windows/jlb.ico"\n' > build/jlb-c.rc
 	$(WINDRES) -O coff -i build/jlb-c.rc -o build/jlb-c-icon.o
-	$(WIN_CC) -O2 -Wall -std=c11 -static -o $@ $(SRC) build/jlb-c-icon.o -lm
+	$(WIN_CC) -O2 -Wall -std=c11 -static -o $@ $(SRC) build/jlb-c-icon.o -lm -lgdi32 -luser32 -lwinmm
 
 windows: windows/jlb-c.exe
 

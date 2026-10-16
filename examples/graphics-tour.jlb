@@ -1,0 +1,174 @@
+>>> A tour of .jlb's graphics: every shape, text, images, angles,
+and the keyboard and mouse. Run it, then:
+  arrow keys   move the green ball
+  click        drops a marker (and counts clicks)
+  space        switches smooth (anti-aliased) edges on and off
+  p            saves a picture of the window as tour.png
+  Escape       closes the window <<<
+
+WINDOW(480, 300, "Graphics tour", 2)
+FPS(60)
+
+pixel_font = FONT("pixel")
+smooth = FALSE
+ball = [x: 240, y: 252]
+marker = NULL
+clicks = 0
+
+>> A little picture made by drawing into an image, then used like any other image.
+badge = IMAGE_NEW(24, 24)
+DRAW_TO(badge)
+CIRCLE(12.5, 12.5, 11, "gold")
+CIRCLE(12.5, 12.5, 11, "orange", 2)
+TEXT(12.5, 12.5, "J", "black", 16, [font: pixel_font])
+DRAW_TO()
+
+DEF cell(n) {
+    >> The middle of grid cell n (1 to 15): five across, three down, under the title.
+    col = (n - 1) % 5
+    row = FLOOR((n - 1) / 5)
+    RETURN [x: 48 + 96 * col, y: 210 - 75 * row]
+}
+
+DEF label(n, name) {
+    >> Writes a shape's name under its cell.
+    c = cell(n)
+    TEXT(c.x, c.y - 30, name, "white", 8, [font: pixel_font])
+}
+
+DEF clicked(x, y, button) {
+    >> Remembers where the mouse was clicked.
+    GLOBAL marker = [x: x, y: y, button: button]
+    GLOBAL clicks += 1
+}
+ON_CLICK(clicked)
+
+ON_KEY("space", DEF() {
+    GLOBAL smooth = !smooth
+})
+ON_KEY("p", DEF() {
+    SAVE_IMAGE(SCREENSHOT(), "tour.png")
+    PRINT("Saved tour.png")
+})
+ON_KEY("escape", DEF() { WINDOW_CLOSE() })
+
+WHILE WINDOW_OPEN() {
+    spin = TIME() * 60
+    STYLE([smooth: smooth])
+    >> (STYLE sets options for every command below; a command's own options add to it.)
+    CLEAR(RGB(20, 24, 40))
+
+    >> Title bar
+    RECT(1, 300, 480, 28, "navy", [anchor: 1])
+    TEXT(8, 286, "Graphics tour", "white", 18, [anchor: 4])
+    TEXT(472, 286, "smooth: " + STR(smooth) + "   clicks: " + STR(clicks), "skyblue", 8, [font: pixel_font, anchor: 6])
+
+    >> 1. PIXEL: a little sparkle of single pixels
+    c = cell(1)
+    FOR i IN 0 TO 11 { PIXEL(c.x + COS(i * 30 + spin) * 14, c.y + SIN(i * 30 + spin) * 14, "white") }
+    PIXEL(c.x, c.y, "yellow")
+    label(1, "PIXEL")
+
+    >> 2. LINE, with a width
+    c = cell(2)
+    LINE(c.x - 25, c.y - 15, c.x + 25, c.y + 15, "coral", 3)
+    LINE(c.x - 25, c.y + 15, c.x + 25, c.y - 15, "skyblue")
+    label(2, "LINE")
+
+    >> 3. ARROW, turning
+    c = cell(3)
+    ARROW(c.x, c.y, c.x + COS(spin) * 24, c.y + SIN(spin) * 24, "lime", 2)
+    label(3, "ARROW")
+
+    >> 4. LINES: a zigzag through points
+    c = cell(4)
+    LINES([[c.x - 28, c.y - 10], [c.x - 14, c.y + 15], [c.x, c.y - 10], [c.x + 14, c.y + 15], [c.x + 28, c.y - 10]], "violet", 2)
+    label(4, "LINES")
+
+    >> 5. CURVE: smooth, through the same kind of points
+    c = cell(5)
+    CURVE([[c.x - 28, c.y - 10], [c.x - 14, c.y + 15], [c.x, c.y - 10], [c.x + 14, c.y + 15], [c.x + 28, c.y - 10]], "turquoise", 2)
+    label(5, "CURVE")
+
+    >> 6. RECT: filled, rounded, and an outline, turning around its center
+    c = cell(6)
+    RECT(c.x, c.y, 50, 30, "teal", [radius: 8])
+    RECT(c.x, c.y, 34, 18, "white", 2, [angle: spin])
+    label(6, "RECT")
+
+    >> 7. CIRCLE: filled and outlined
+    c = cell(7)
+    CIRCLE(c.x, c.y, 20, "crimson")
+    CIRCLE(c.x, c.y, 24, "pink", 2)
+    label(7, "CIRCLE")
+
+    >> 8. ELLIPSE, half see-through
+    c = cell(8)
+    ELLIPSE(c.x - 8, c.y, 44, 26, "blue", [alpha: 160])
+    ELLIPSE(c.x + 8, c.y, 44, 26, "red", [alpha: 160])
+    label(8, "ELLIPSE")
+
+    >> 9. TRIANGLE from three corners
+    c = cell(9)
+    TRIANGLE(c.x - 24, c.y - 18, c.x + 24, c.y - 18, c.x, c.y + 20, "orange")
+    TRIANGLE(c.x - 24, c.y - 18, c.x + 24, c.y - 18, c.x, c.y + 20, "yellow", 2)
+    label(9, "TRIANGLE")
+
+    >> 10. POLYGON: any corners you like
+    c = cell(10)
+    POLYGON([[c.x - 25, c.y - 15], [c.x - 5, c.y + 20], [c.x + 25, c.y + 10], [c.x + 15, c.y - 20]], "olive")
+    label(10, "POLYGON")
+
+    >> 11. NGON: regular shapes with 3 to 8 sides, changing every second
+    c = cell(11)
+    sides = 3 + FLOOR(TIME()) % 6
+    NGON(c.x, c.y, 22, sides, "purple")
+    TEXT(c.x, c.y, sides, "white", 8, [font: pixel_font])
+    label(11, "NGON")
+
+    >> 12. STAR, spinning around its center
+    c = cell(12)
+    STAR(c.x, c.y, 24, 10, 5, "gold", [angle: spin])
+    label(12, "STAR")
+
+    >> 13. ARC: part of a circle's edge, growing
+    c = cell(13)
+    ARC(c.x, c.y, 20, 90, 90 + spin % 360, "mint", 4)
+    label(13, "ARC")
+
+    >> 14. PIE: a slice (like a pie chart)
+    c = cell(14)
+    PIE(c.x, c.y, 22, 30, 330, "salmon")
+    PIE(c.x + 4, c.y, 22, -30, 30, "tan")
+    label(14, "PIE")
+
+    >> 15. FLOOD fills inside an outline, like a paint bucket
+    c = cell(15)
+    CIRCLE(c.x, c.y, 20, "white", 1)
+    LINE(c.x - 20, c.y, c.x + 20, c.y, "white")
+    FLOOD(c.x, c.y + 8, "indigo")
+    label(15, "FLOOD")
+
+    >> The badge image in the title bar: one turning around its middle, one tinted and smaller
+    DRAW(badge, 215, 286, [angle: spin])
+    DRAW(badge, 245, 286, [tint: "skyblue", scale: 0.75])
+
+    >> The green ball: held keys move it
+    IF KEY_DOWN("left") { ball.x -= 2 }
+    IF KEY_DOWN("right") { ball.x += 2 }
+    IF KEY_DOWN("up") { ball.y += 2 }
+    IF KEY_DOWN("down") { ball.y -= 2 }
+    ball.x = MIN(MAX(ball.x, 8), 473)
+    ball.y = MIN(MAX(ball.y, 8), 293)
+    CIRCLE(ball.x, ball.y, 6, "lime")
+
+    >> The mouse: a ring that follows it, and the last click
+    m = MOUSE()
+    IF m.inside { CIRCLE(m.x, m.y, 5, "white", 1) }
+    IF marker !== NULL {
+        STAR(marker.x, marker.y, 7, 3, 4, "yellow")
+        TEXT(marker.x + 9, marker.y, marker.button, "yellow", 8, [font: pixel_font, anchor: 4])
+    }
+    SHOW()
+}
+PRINT("Thanks for taking the tour! You clicked", clicks, "times.")

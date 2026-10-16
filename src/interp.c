@@ -1531,6 +1531,18 @@ static bool action(Interp *it, bool insert, Expr **args, int nargs, Value *out) 
 static bool call(Interp *it, Expr *e, Value *out) {
     Value f;
     if (!eval(it, e->x, &f)) return false;
+    if (f.t == V_BUILTIN && f.bi == GFX_FIRST + 1 && e->nargs == 1 && is_lvalue(e->args[0])) {
+        // DRAW_TO(name) of an image: drawing goes into that variable's image.
+        Slot *s;
+        if (!lvalue_slot(it, e->args[0], &s)) return false;
+        if (s->v.t == V_IMAGE) {
+            bool ok = gfx_draw_to_slot(it, s);
+            slot_unref(s);
+            *out = NULL_VALUE;
+            return ok;
+        }
+        slot_unref(s);
+    }
     if (f.t == V_BUILTIN) {
         Value *a = xmalloc((size_t)(e->nargs ? e->nargs : 1) * sizeof(Value));
         int n = 0;
@@ -1604,6 +1616,7 @@ static bool eval(Interp *it, Expr *e, Value *out) {
             else ok = false;
             break;
         }
+        case V_IMAGE: case V_WINDOW: case V_FONT: ok = gfx_field(bv, e->name, out); break;
         case V_NULL: ok = fail("can't read .%s of NULL", e->name->s); break;
         default: ok = fail("can't read .%s of a %s", e->name->s, v_type(bv));
         }
@@ -1926,7 +1939,7 @@ int run_main(Interp *it, const char *path) {
         it->imported[it->nimported++] = c;
     }
     // When the program's own code ends, the tasks it started get to finish.
-    bool ok = run_module(it, path, env) && tasks_finish(it);
+    bool ok = run_module(it, path, env) && tasks_finish(it) && gfx_finish(it);
     env_unref(env);
     out_flush();
     if (ok || g_fault == FAULT_END || g_fault == FAULT_CANCELLED) {

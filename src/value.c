@@ -65,6 +65,7 @@ Value v_retain(Value v) {
     case V_TABLE: v.tb.tab->rc++; break;
     case V_FUNC: v.fn->rc++; break;
     case V_TASK: v.task.name->rc++; break;
+    case V_IMAGE: case V_FONT: gfx_value_retain(v); break;
     default: break;
     }
     return v;
@@ -77,6 +78,7 @@ void v_release(Value v) {
     case V_TABLE: table_unref(v.tb.tab); break;
     case V_FUNC: func_unref(v.fn); break;
     case V_TASK: str_unref(v.task.name); break;
+    case V_IMAGE: case V_FONT: gfx_value_release(v); break;
     default: break;
     }
 }
@@ -94,6 +96,9 @@ const char *v_type(Value v) {
     case V_NULL: return "NULL";
     case V_TABLE: return "TABLE";
     case V_TASK: return "TASK";
+    case V_IMAGE: return "IMAGE";
+    case V_WINDOW: return "WINDOW";
+    case V_FONT: return "FONT";
     default: return "FUNCTION";
     }
 }
@@ -400,6 +405,9 @@ void write_value(Buf *b, Value v, bool quote, int depth) {
         buf_puts(b, "TASK ");
         buf_puts(b, v.task.name->s);
         break;
+    case V_IMAGE:
+    case V_WINDOW:
+    case V_FONT: gfx_value_write(b, v); break;
     case V_TABLE: {
         Table *t = v.tb.tab;
         if (t->report) {

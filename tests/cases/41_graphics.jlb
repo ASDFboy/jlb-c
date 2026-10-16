@@ -1,0 +1,54 @@
+>> Drawing into images (no window needed).
+pic = IMAGE_NEW(40, 30, "white")
+PRINT(pic, TYPE(pic), pic.width, pic.height)
+DRAW_TO(pic)
+RECT(10, 10, 9, 9, "red")
+PRINT(GET_PIXEL(10, 10) == 0xFF0000, GET_PIXEL(20, 20) == 0xFFFFFF)
+CIRCLE(30, 20, 4, "blue")
+PRINT(GET_PIXEL(30, 20) == 0x0000FF, GET_PIXEL(30, 25) == 0xFFFFFF)
+LINE(1, 1, 40, 1, "black")
+PRINT(GET_PIXEL(5, 1) == 0, GET_PIXEL(5, 2) == 0xFFFFFF)
+RECT(1, 30, 4, 4, "green", [anchor: 1])
+PRINT(GET_PIXEL(1, 30) == 0x00C000, GET_PIXEL(4, 27) == 0x00C000, GET_PIXEL(5, 30) == 0xFFFFFF)
+PRINT(GET_PIXEL(0, 0), GET_PIXEL(41, 1))
+PRINT(RGB(255, 136, 0) == 0xFF8800, RGB(1, 2, 3, 0) == 0xFF010203)
+
+>> Copies share until one is drawn into.
+copy = pic
+DRAW_TO(copy)
+CLEAR("black")
+PRINT(GET_PIXEL(20, 20))
+DRAW_TO(pic)
+PRINT(GET_PIXEL(20, 20) == 0xFFFFFF, copy === pic, copy == copy)
+
+>> Styles: the current one, replaced by STYLE, cleared by RESET_STYLE.
+STYLE([anchor: 7, alpha: 128])
+PRINT(STYLE())
+RESET_STYLE()
+PRINT(STYLE())
+size = TEXT_SIZE("Hi", [font: FONT("pixel"), size: 8])
+PRINT(size.width, size.height)
+PRINT(FONT("pixel"), TYPE(FONT()))
+
+>> Parts, flood fill, saving and loading.
+FLOOD(20, 20, "yellow")
+PRINT(GET_PIXEL(20, 25) == 0xFFFF00, GET_PIXEL(10, 10) == 0xFF0000)
+corner = PART(pic, 8, 8, 4, 4)
+PRINT(corner)
+SAVE_IMAGE(pic, "pic.png")
+back = IMAGE("pic.png")
+DRAW_TO(back)
+PRINT(back.width, GET_PIXEL(10, 10) == 0xFF0000)
+
+>> Mistakes.
+TRY { CIRCLE(1, 1, 5, "reddish") } FAIL e { PRINT(e.message) }
+TRY { RECT(1, 1, 2, 2, "red", [spin: 3]) } FAIL e { PRINT(e.message) }
+TRY { RGB(300, 0, 0) } FAIL e { PRINT(e.message) }
+TRY { DRAW_TO(IMAGE_NEW(2, 2)) } FAIL e { PRINT(e.message) }
+TRY { IMAGE("missing.png") } FAIL e { PRINT(e.message) }
+TRY { KEY_DOWN("nope") } FAIL e { PRINT(SPLIT(e.message, " (")[1]) }
+TRY { pic.depth } FAIL e { PRINT(e.message) }
+DRAW_TO()
+TRY { PIXEL(1, 1, "red") } FAIL e { PRINT(e.message) }
+CONST frozen = IMAGE_NEW(2, 2)
+TRY { DRAW_TO(frozen) } FAIL e { PRINT(e.message) }

@@ -426,6 +426,8 @@ static bool loose_eq_d(Value a, Value b, int d) {
     if (x == V_FUNC && y == V_FUNC) return a.fn == b.fn;
     if (x == V_BUILTIN && y == V_BUILTIN) return a.bi == b.bi;
     if (x == V_TASK && y == V_TASK) return a.task.id == b.task.id;
+    if (x == y && (x == V_IMAGE || x == V_FONT)) return a.gfx.p == b.gfx.p;
+    if (x == V_WINDOW && y == V_WINDOW) return a.gfx.id == b.gfx.id;
     return false;
 }
 
@@ -444,6 +446,8 @@ bool strict_eq(Value a, Value b) {
     case V_FUNC: return a.fn == b.fn;
     case V_BUILTIN: return a.bi == b.bi;
     case V_TASK: return a.task.id == b.task.id;
+    case V_IMAGE: case V_FONT: return a.gfx.p == b.gfx.p;
+    case V_WINDOW: return a.gfx.id == b.gfx.id;
     }
     return false;
 }

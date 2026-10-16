@@ -23,7 +23,7 @@ Hello, Sam!
 ## Why a second interpreter?
 
 - **It keeps the language honest.** When two interpreters written separately agree on every test program, the rules are written down clearly enough to be built twice, and a difference between them points straight at a bug in one of them.
-- **It's small and quick.** One small program with no dependencies (about 200 KB on Linux, 530 KB on Windows), built from plain C11. A million-step loop takes about 0.12 seconds.
+- **It's small and quick.** One small program with no dependencies (about 500 KB on Linux, 860 KB on Windows, fonts and windows included), built from plain C11. A million-step loop takes about 0.12 seconds.
 - **It's easy to build anywhere** there's a C compiler, including computers Rust doesn't support.
 
 [JLB IDE](https://github.com/ASDFboy/jlb-ide) can run programs with either interpreter (switch with one click in its toolbar) and compare the two.
@@ -60,8 +60,10 @@ make windows    # builds windows/jlb-c.exe (needs MinGW-w64)
 Without `make`, this does the same:
 
 ```sh
-cc -O2 -std=c11 -D_DEFAULT_SOURCE -D_POSIX_C_SOURCE=200809L -o jlb-c src/*.c -lm -lpthread
+cc -O2 -std=c11 -D_DEFAULT_SOURCE -D_POSIX_C_SOURCE=200809L -o jlb-c src/*.c src/gfx/*.c -lm -lpthread -ldl
 ```
+
+Graphics windows use Win32 on Windows and X11 on Linux (loaded when a program opens a window, so jlb-c still runs without it; Wayland desktops run X11 programs too). Other systems can draw into images, and with `JLB_HEADLESS=1` into windows kept in memory.
 
 ## Tests
 
@@ -79,6 +81,8 @@ cc -O2 -std=c11 -D_DEFAULT_SOURCE -D_POSIX_C_SOURCE=200809L -o jlb-c src/*.c -lm
 | `src/interp.c` | running the tree: variables, loops, functions, `TRY`, `GOTO`, `IMPORT` and `LOAD` |
 | `src/builtins.c` | the ALL CAPS commands |
 | `src/tasks.c` | tasks (`START`, `AWAIT`, `DONE`, `CANCEL`): each on its own thread, taking turns with the same rules as jlb-rust |
+| `src/graphics.c` | the graphics commands (`WINDOW`, `SHOW`, shapes, text, images, input): turns .jlb values into calls to the core below |
+| `src/gfx/` | the graphics core, shared with jlb-rust so both draw exactly the same pixels: shapes, text (stb_truetype, with built-in fonts), images (stb_image), and windows on their own thread (`gfx_window.c`) |
 | `src/ide.c` | the editor modes |
 | `src/main.c` | the command line |
 

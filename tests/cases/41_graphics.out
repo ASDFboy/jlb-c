@@ -1,0 +1,25 @@
+IMAGE 40x30 IMAGE 40 30
+TRUE TRUE
+TRUE TRUE
+TRUE TRUE
+TRUE TRUE TRUE
+NULL NULL
+TRUE TRUE
+0
+TRUE FALSE TRUE
+[anchor: 7, alpha: 128]
+[]
+16 8
+FONT pixel FONT
+TRUE TRUE
+IMAGE 4x4
+40 TRUE
+CIRCLE: there's no color called "reddish" (try "red", "skyblue", "#ff8800", or a number like 0xFF8800)
+RECT doesn't have an option called spin (its options are anchor, angle, pivot, outline, alpha, scale, scale_x, scale_y, flip_x, flip_y, tint, smooth, radius, font, size, align and wrap)
+RGB: red must be a whole number from 0 to 255
+DRAW_TO needs the name of an image's variable, like DRAW_TO(background), so the drawing has somewhere to stay
+can't open the image missing.png (no such file)
+KEY_DOWN: there's no key called "nope"
+an IMAGE has .width and .height, not .depth
+there's no window to draw in yet: open one with WINDOW(width, height)
+DRAW_TO can't draw into a constant (CONST) image

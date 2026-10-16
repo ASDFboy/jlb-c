@@ -204,7 +204,7 @@ typedef struct Table Table;
 typedef struct Function Function;
 typedef struct Slot Slot;
 
-typedef enum { V_NULL, V_NUM, V_TEXT, V_BOOL, V_TABLE, V_FUNC, V_BUILTIN, V_TASK } VType;
+typedef enum { V_NULL, V_NUM, V_TEXT, V_BOOL, V_TABLE, V_FUNC, V_BUILTIN, V_TASK, V_IMAGE, V_WINDOW, V_FONT } VType;
 
 struct Value {
     VType t;
@@ -222,6 +222,10 @@ struct Value {
             Str *name;
             int id;
         } task; // a function running side by side (START)
+        struct {
+            void *p; // GfxImage or GfxFont (counted references)
+            int id;  // which window
+        } gfx;      // graphics.c
     };
 };
 
@@ -554,5 +558,20 @@ void frame_push(Interp *it, Function *f, Env *env, int line, Source *src);
 void frame_pop(Interp *it);
 bool call_prepared(Interp *it, Function *func, Slot **vals, int nvals, Value *out);
 int run_repl(void);
+
+// ---------- graphics (graphics.c, with the shared core in gfx/) ----------
+
+/// The first graphics command in WORDS; the rest follow it.
+extern const int GFX_FIRST;
+bool gfx_builtin(Interp *it, int bi, Value *a, int n, Value *out);
+/// DRAW_TO(name): drawing goes into the image in that variable.
+bool gfx_draw_to_slot(Interp *it, Slot *s);
+/// img.width and the like.
+bool gfx_field(Value base, const Str *name, Value *out);
+/// After the program's code: windows stay open (and their events work) until closed.
+bool gfx_finish(Interp *it);
+void gfx_value_retain(Value v);
+void gfx_value_release(Value v);
+void gfx_value_write(Buf *b, Value v);
 
 #endif
