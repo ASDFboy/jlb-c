@@ -17,8 +17,8 @@ hi
 hi
 hi
 10
-FUNC say_hi
-FUNC
+FUNCTION say_hi
+FUNCTION
 3628800
 NULL
 NULL

@@ -1,5 +1,5 @@
 >> Logic: one symbol stops early, two symbols always check both sides
-FUNC check(label) { PRINT("checked " + label); RETURN TRUE }
+DEF check(label) { PRINT("checked " + label); RETURN TRUE }
 PRINT(FALSE & check("a"))
 PRINT(FALSE && check("b"))
 PRINT(TRUE | check("c"))

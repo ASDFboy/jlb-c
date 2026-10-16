@@ -314,7 +314,7 @@ static Stmt *expr_or_assign(Parser *p, int line) {
     return s;
 }
 
-/// FUNC name(...) { ... } as a statement, with FUNC (and GLOBAL) already read.
+/// DEF name(...) { ... } as a statement, with DEF (and GLOBAL) already read.
 static Stmt *func_stmt(Parser *p, int line) {
     advance(p);
     Str *name = expect_name(p, "a function name");
@@ -347,7 +347,7 @@ static Stmt *statement(Parser *p) {
         s = new_stmt(S_FOR_IN, line);
         return for_stmt(p, s) ? s : NULL;
     case KW_FUNC:
-        // FUNC GLOBAL name(...) is the same as GLOBAL FUNC name(...).
+        // DEF GLOBAL name(...) is the same as GLOBAL DEF name(...).
         if (peek_at(p, 1)->k == T_KW && peek_at(p, 1)->kw == KW_GLOBAL && peek_at(p, 2)->k == T_NAME) {
             advance(p);
             s = func_stmt(p, line);
@@ -411,7 +411,7 @@ static Stmt *statement(Parser *p) {
             s = statement(p);
         } else {
             if (peek(p)->k != T_NAME) {
-                pfail(p, "GLOBAL goes before a name that gets a value (GLOBAL score = 0), FUNC or CONST");
+                pfail(p, "GLOBAL goes before a name that gets a value (GLOBAL score = 0), DEF or CONST");
                 return NULL;
             }
             Str *name = peek(p)->s;

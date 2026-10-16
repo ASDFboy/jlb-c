@@ -13,8 +13,8 @@ total = 1 +
     2 +
     3
 PRINT(total)
-FUNC run(f) { RETURN f() }
-PRINT(run(FUNC() {
+DEF run(f) { RETURN f() }
+PRINT(run(DEF() {
     a = 1
     b = 2
     RETURN a + b

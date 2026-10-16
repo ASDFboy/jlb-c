@@ -94,7 +94,7 @@ const char *v_type(Value v) {
     case V_NULL: return "NULL";
     case V_TABLE: return "TABLE";
     case V_TASK: return "TASK";
-    default: return "FUNC";
+    default: return "FUNCTION";
     }
 }
 
@@ -389,10 +389,10 @@ void write_value(Buf *b, Value v, bool quote, int depth) {
     case V_NULL: buf_puts(b, "NULL"); break;
     case V_FUNC:
         if (v.fn->decl->name) {
-            buf_puts(b, "FUNC ");
+            buf_puts(b, "FUNCTION ");
             buf_put(b, v.fn->decl->name->s, v.fn->decl->name->len);
         } else {
-            buf_puts(b, "FUNC");
+            buf_puts(b, "FUNCTION");
         }
         break;
     case V_BUILTIN: buf_puts(b, WORDS[v.bi]); break;

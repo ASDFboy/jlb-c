@@ -1,13 +1,13 @@
 >> Tasks: START, AWAIT, DONE, CANCEL, and turns that interleave the same way every time.
 shared = [count: 0]
-FUNC worker(tag, @box, n) {
+DEF worker(tag, @box, n) {
     FOR i IN 1 TO n {
         box.count += 1
         IF i % 150 == 0 { PRINT(tag, i, box.count) }
     }
     RETURN tag
 }
-FUNC sleeper(ms) {
+DEF sleeper(ms) {
     WAIT(ms / 1000)
     PRINT("slept", ms)
     RETURN ms
@@ -16,21 +16,21 @@ ts = [START worker("a", shared, 900), START worker("b", shared, 700), START work
 PRINT("started", shared.count)
 PRINT(AWAIT(ts), shared.count)
 PRINT(AWAIT([START sleeper(0), START sleeper(0)]))
-FUNC nested() {
+DEF nested() {
     inner = START worker("n", shared, 40)
     RETURN AWAIT(inner) + "!"
 }
 PRINT(AWAIT(START nested()))
-FUNC never() { WHILE TRUE { WAIT(0) } }
+DEF never() { WHILE TRUE { WAIT(0) } }
 x = START never()
 WAIT(0.01)
 CANCEL(x)
 PRINT(DONE(x), AWAIT(x))
-FUNC fails() {
+DEF fails() {
     WAIT(0)
     ERROR("boom")
 }
-FUNC catcher() {
+DEF catcher() {
     TRY { AWAIT(START fails()) } FAIL e { RETURN "caught " + e.message }
 }
 PRINT(AWAIT(START catcher()))

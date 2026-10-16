@@ -5,7 +5,7 @@
 const char *const WORDS[] = {
     // keywords
     "IF", "ELIF", "ELSEIF", "ELSE", "WHILE", "REPEAT", "FOR", "IN", "TO", "STEP", "BREAK", "SKIP",
-    "FUNC", "RETURN", "LOCAL", "GLOBAL", "CONST", "START", "TRY", "FAIL", "GOTO", "POINT", "IMPORT", "LOAD", "END", "TRUE",
+    "DEF", "RETURN", "LOCAL", "GLOBAL", "CONST", "START", "TRY", "FAIL", "GOTO", "POINT", "IMPORT", "LOAD", "END", "TRUE",
     "FALSE", "NULL", "UNDEFINE", "INSERT", "DROP",
     // built-in commands
     "PRINT", "NUM", "STR", "ENG", "HEX", "LEN", "ERROR", "INPUT", "READ", "READ_LINES", "WRITE",
@@ -27,6 +27,8 @@ const char *const OP_TEXT[OP_COUNT] = {
 };
 
 int find_word(const char *w, size_t n) {
+    // FUNC is the older name for DEF, and still works.
+    if (n == 4 && memcmp(w, "FUNC", 4) == 0) w = "DEF", n = 3;
     for (int i = 0; i < N_WORDS; i++) {
         if (strlen(WORDS[i]) == n && memcmp(WORDS[i], w, n) == 0) return i;
     }

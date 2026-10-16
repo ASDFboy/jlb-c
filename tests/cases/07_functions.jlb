@@ -2,7 +2,7 @@
 score = 10
 count = 3
 enemies = ["a", "b", "c", "d"]
-FUNC count_enemies(amount) {
+DEF count_enemies(amount) {
     GLOBAL score += amount
     LOCAL count = 0
     FOR e IN enemies {
@@ -14,39 +14,39 @@ FUNC count_enemies(amount) {
 PRINT(count_enemies(5))
 PRINT(count)
 PRINT(score)
-FUNC add_points(amount) {
+DEF add_points(amount) {
     bonus = amount * 2
     RETURN bonus
 }
 PRINT(add_points(5))
 TRY { PRINT(bonus) } FAIL e { PRINT(e.message) }
-FUNC outer() { LOCAL secret = 42; RETURN inner() }
-FUNC inner() { RETURN outer.secret }
+DEF outer() { LOCAL secret = 42; RETURN inner() }
+DEF inner() { RETURN outer.secret }
 PRINT(outer())
 TRY { PRINT(outer.secret) } FAIL e { PRINT(e.message) }
-FUNC greet(name, greeting = "Hi") { RETURN greeting + ", " + name }
+DEF greet(name, greeting = "Hi") { RETURN greeting + ", " + name }
 PRINT(greet("Alex"))
 PRINT(greet("Alex", "Hello"))
 PRINT(greet("Alex", NULL))
 TRY { greet() } FAIL e { PRINT(e.message) }
 TRY { greet(1, 2, 3) } FAIL e { PRINT(e.message) }
-FUNC total(...nums) { LOCAL sum = 0; FOR n IN nums { sum += n }; RETURN sum }
+DEF total(...nums) { LOCAL sum = 0; FOR n IN nums { sum += n }; RETURN sum }
 PRINT(total(1, 2, 3))
 PRINT(total())
-FUNC say_hi() { PRINT("hi") }
+FUNC say_hi() { PRINT("hi") }   >> FUNC is the older name for DEF
 g = say_hi
 g()
-FUNC do_twice(action) { action(); action() }
+DEF do_twice(action) { action(); action() }
 do_twice(say_hi)
-double = FUNC(x) { RETURN x * 2 }
+double = DEF(x) { RETURN x * 2 }
 PRINT(double(5))
 PRINT(say_hi)
 PRINT(double)
-FUNC fact(n) { IF n <= 1 { RETURN 1 }; RETURN n * fact(n - 1) }
+DEF fact(n) { IF n <= 1 { RETURN 1 }; RETURN n * fact(n - 1) }
 PRINT(fact(10))
-FUNC no_return() { x = 1 }
+DEF no_return() { x = 1 }
 PRINT(no_return())
-FUNC show_local() {
+DEF show_local() {
     LOCAL v
     PRINT(v)
     v = 5

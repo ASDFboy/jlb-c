@@ -138,7 +138,7 @@ static bool shareable(Value v) {
 }
 
 static const char *fname(Function *f) {
-    return f->decl->name ? f->decl->name->s : "FUNC";
+    return f->decl->name ? f->decl->name->s : "FUNCTION";
 }
 
 static bool whole_val(Value v, const char *what, int64_t *out) {
@@ -1158,7 +1158,7 @@ static bool assign_entry(Interp *it, Slot *bs, const Key *key, Op op, Expr *rhs)
     return set_entry(bs, key, nv);
 }
 
-/// GLOBAL name = ..., GLOBAL FUNC name, GLOBAL CONST name: the file's outside name,
+/// GLOBAL name = ..., GLOBAL DEF name, GLOBAL CONST name: the file's outside name,
 /// even inside a function.
 static bool exec_global(Interp *it, Stmt *s) {
     OrdMap *env = &top(it)->env->map;

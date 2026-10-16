@@ -9,10 +9,10 @@ b[1] = 99
 PRINT(a)
 PRINT(b)
 player = [score: 0]
-FUNC add_bonus(@p) { p.score += 10 }
+DEF add_bonus(@p) { p.score += 10 }
 add_bonus(player)
 PRINT(player.score)
-FUNC no_change(p) { p.score += 10 }
+DEF no_change(p) { p.score += 10 }
 no_change(player)
 PRINT(player.score)
 enemies = [[health: 30], [health: 50]]
@@ -36,7 +36,7 @@ copy = nested
 copy.inv[1] = "axe"
 PRINT(nested)
 PRINT(copy)
-FUNC heal(@p, amount = 10) { p.health += amount }
+DEF heal(@p, amount = 10) { p.health += amount }
 hero = [health: 50]
 heal(hero)
 heal(hero, 5)

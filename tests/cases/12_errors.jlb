@@ -6,7 +6,7 @@ TRY {
     PRINT(err.line)
     PRINT(err.file)
 }
-FUNC risky(n) {
+DEF risky(n) {
     IF n > 5 { ERROR("too big: " + n) }
     RETURN n
 }

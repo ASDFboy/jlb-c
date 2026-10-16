@@ -6,7 +6,7 @@ IF tries < 3 {
     GOTO retry
 }
 PRINT("Done after " + tries + " tries")
-FUNC loop_test() {
+DEF loop_test() {
     n = 0
     POINT top
     n += 1

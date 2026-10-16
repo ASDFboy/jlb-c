@@ -1,10 +1,10 @@
 score = 10
 lives = 3
-FUNC load_save(file) {
+DEF load_save(file) {
     data = "hello"
     RETURN NUM(data)
 }
-FUNC start_game() {
+DEF start_game() {
     tries = 1
     RETURN load_save("save.txt")
 }

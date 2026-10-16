@@ -297,7 +297,7 @@ bool task_start(Interp *it, Function *func, Slot **vals, int nvals, int line, Va
         it->tasks = xrealloc(it->tasks, (size_t)it->tcap * sizeof(Task));
     }
     int id = it->ntasks;
-    Str *name = func->decl->name ? str_ref(func->decl->name) : str_c("FUNC");
+    Str *name = func->decl->name ? str_ref(func->decl->name) : str_c("FUNCTION");
     Task *t = &it->tasks[id];
     task_init(t, name);
     func->rc++;
