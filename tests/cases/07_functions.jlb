@@ -1,9 +1,9 @@
->> Functions, scope, LOCAL, function_name.var, optional and any-number inputs, functions as values
+>> Functions, scope, LOCAL, GLOBAL, function_name.var, optional and any-number inputs, functions as values
 score = 10
 count = 3
 enemies = ["a", "b", "c", "d"]
 FUNC count_enemies(amount) {
-    score += amount
+    GLOBAL score += amount
     LOCAL count = 0
     FOR e IN enemies {
         count += 1

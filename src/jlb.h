@@ -442,6 +442,7 @@ struct Stmt {
     Expr *e, *e2, *e3, *e4;
     Str *name, *name2;  // loop variables, LOCAL, TRY's FAIL name, GOTO/POINT, file names
     bool shared, shared2, has2;
+    bool global;        // GLOBAL before an S_ASSIGN, S_FUNC or S_CONST: the file's outside name
     Block body, body2;  // loops, TRY/FAIL, ELSE (body2) ...
     Expr **conds;       // S_IF: each condition
     Block *blocks;      // S_IF: each branch

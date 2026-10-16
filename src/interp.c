@@ -465,14 +465,28 @@ static Slot *lookup(Interp *it, const Str *name) {
     return om_gets(&f->env->map, name);
 }
 
+/// A name of the running function (its locals, FOR and FAIL names), or, outside
+/// functions, any name. Inside a function, outside names are only read.
+static Slot *lookup_own(Interp *it, const Str *name) {
+    Frame *f = top(it);
+    if (!f->func) return lookup(it, name);
+    for (int i = f->scopes.n; i-- > 0;) {
+        Slot *s = om_gets(&f->scopes.s[i], name);
+        if (s) return s;
+    }
+    return NULL;
+}
+
 static void create_var(Interp *it, Str *name, Slot *s) {
     Frame *f = top(it);
     if (f->func) om_insert(&f->scopes.s[0], name, s);
     else om_insert(&f->env->map, name, s);
 }
 
+/// Giving a value to a name: inside a function it's the function's own (a new local
+/// unless it already is one); GLOBAL is how a function changes an outside name.
 bool set_var(Interp *it, Str *name, Value v) {
-    Slot *s = lookup(it, name);
+    Slot *s = lookup_own(it, name);
     if (s) {
         if (!const_name(s, name)) {
             v_release(v);
@@ -488,7 +502,7 @@ bool set_var(Interp *it, Str *name, Value v) {
 
 /// Points a name at a slot (takes the slot).
 static bool bind_var(Interp *it, Str *name, Slot *s) {
-    Slot *old = lookup(it, name);
+    Slot *old = lookup_own(it, name);
     if (old && !const_name(old, name)) {
         slot_unref(s);
         return false;
@@ -500,7 +514,7 @@ static bool bind_var(Interp *it, Str *name, Slot *s) {
             return true;
         }
     }
-    if (om_gets(&f->env->map, name)) {
+    if (!f->func && om_gets(&f->env->map, name)) {
         om_insert(&f->env->map, name, s);
         return true;
     }
@@ -572,6 +586,7 @@ static bool start(Interp *it, Expr *call, Value *out);
 static bool assign(Interp *it, Expr *target, Op op, Expr *rhs);
 static Flow for_to(Interp *it, Stmt *s);
 static Flow for_in(Interp *it, Stmt *s);
+static bool exec_global(Interp *it, Stmt *s);
 static bool do_import(Interp *it, Str *p);
 static bool do_load(Interp *it, Str *p);
 
@@ -633,6 +648,7 @@ static bool eval_truth(Interp *it, Expr *e, bool *out) {
 }
 
 static Flow exec_kind(Interp *it, Stmt *s) {
+    if (s->global) return exec_global(it, s) ? F_NORMAL : F_ERR;
     switch (s->k) {
     case S_EXPR: {
         Value v;
@@ -1142,6 +1158,66 @@ static bool assign_entry(Interp *it, Slot *bs, const Key *key, Op op, Expr *rhs)
     return set_entry(bs, key, nv);
 }
 
+/// GLOBAL name = ..., GLOBAL FUNC name, GLOBAL CONST name: the file's outside name,
+/// even inside a function.
+static bool exec_global(Interp *it, Stmt *s) {
+    OrdMap *env = &top(it)->env->map;
+    if (s->k == S_CONST) {
+        if (om_gets(env, s->name))
+            return fail("%s already has an outside value, so CONST can't make it a constant. Use CONST where %s first gets its value", s->name->s, s->name->s);
+        Value v;
+        if (!eval(it, s->e, &v)) return false;
+        om_insert(env, s->name, slot_const(v));
+        return true;
+    }
+    Str *n = s->k == S_FUNC ? s->fn->name : s->e->name;
+    Slot *old = om_gets(env, n);
+    if (old && !const_name(old, n)) return false;
+    if (s->k == S_FUNC) {
+        Value f = make_func(it, s->fn);
+        if (old) {
+            v_release(old->v);
+            old->v = f;
+        } else {
+            om_insert(env, n, slot_new(f));
+        }
+        return true;
+    }
+    if (s->op == OP_SHARE_SET) {
+        Slot *sh;
+        if (!share_slot(it, s->e2, &sh)) return false;
+        om_insert(&top(it)->env->map, n, sh);
+        return true;
+    }
+    if (s->op == OP_SET) {
+        Value v;
+        if (!eval(it, s->e2, &v)) return false;
+        v = v_copy(v);
+        old = om_gets(&top(it)->env->map, n); // the value may have made it
+        if (old) {
+            if (!const_name(old, n)) {
+                v_release(v);
+                return false;
+            }
+            v_release(old->v);
+            old->v = v;
+        } else {
+            om_insert(&top(it)->env->map, n, slot_new(v));
+        }
+        return true;
+    }
+    if (!old) return fail("%s has no outside value yet, so GLOBAL %s %s can't change it", n->s, n->s, OP_TEXT[s->op]);
+    slot_ref(old);
+    Value r;
+    if (!eval(it, s->e2, &r)) {
+        slot_unref(old);
+        return false;
+    }
+    bool ok = compound(old, s->op, r);
+    slot_unref(old);
+    return ok;
+}
+
 static bool assign(Interp *it, Expr *target, Op op, Expr *rhs) {
     switch (target->k) {
     case E_VAR: {
@@ -1156,8 +1232,13 @@ static bool assign(Interp *it, Expr *target, Op op, Expr *rhs) {
             if (!eval(it, rhs, &v)) return false;
             return set_var(it, n, v_copy(v));
         }
-        Slot *slot = lookup(it, n);
-        if (!slot) return fail("%s isn't defined", n->s);
+        Slot *slot = lookup_own(it, n);
+        if (!slot) {
+            if (lookup(it, n))
+                return fail("%s isn't one of this function's own variables, so %s %s can't change it. To change the outside %s, write GLOBAL %s %s ...",
+                            n->s, n->s, OP_TEXT[op], n->s, n->s, OP_TEXT[op]);
+            return fail("%s isn't defined", n->s);
+        }
         if (!const_name(slot, n)) return false;
         slot_ref(slot);
         Value r;

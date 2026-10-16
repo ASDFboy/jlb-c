@@ -1,0 +1,12 @@
+inside: 99 outside
+helper
+99 10 changed 2
+shared also shared constant
+helper isn't defined
+score isn't one of this function's own variables, so score += can't change it. To change the outside score, write GLOBAL score += ...
+11
+15
+[1, 2, 3] [1, 2, 3]
+fixed is a constant (CONST), so it can't be changed
+missing has no outside value yet, so GLOBAL missing += can't change it
+top

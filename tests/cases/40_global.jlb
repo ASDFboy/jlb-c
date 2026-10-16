@@ -1,0 +1,46 @@
+>> Names given a value inside a function are its own, unless GLOBAL comes first
+score = 10
+name = "outside"
+FUNC play() {
+    score = 99               >> a new local: the outside score stays 10
+    PRINT("inside:", score, name)
+    GLOBAL name = "changed"  >> the outside name
+    GLOBAL lives = 3         >> a new outside name
+    GLOBAL lives -= 1
+    FUNC helper() { RETURN "helper" }
+    GLOBAL FUNC shared() { RETURN "shared" }
+    FUNC GLOBAL also_shared() { RETURN "also shared" }
+    GLOBAL CONST limit_note = "constant"
+    PRINT(helper())
+    RETURN score
+}
+PRINT(play(), score, name, lives)
+PRINT(shared(), also_shared(), limit_note)
+TRY { PRINT(helper()) } FAIL e { PRINT(e.message) }
+FUNC bump() { score += 1 }
+TRY { bump() } FAIL e { PRINT(e.message) }
+FUNC bump_outside() { GLOBAL score += 1 }
+bump_outside()
+PRINT(score)
+>> Entries of an outside table can still be changed
+hero = [hp: 5]
+FUNC heal() { hero.hp += 10 }
+heal()
+PRINT(hero.hp)
+>> Sharing with @= is local too, unless GLOBAL
+pool = [1, 2]
+FUNC link() {
+    mine @= pool
+    mine += 3
+    GLOBAL alias @= pool
+}
+link()
+PRINT(pool, alias)
+CONST fixed = 1
+FUNC try_fixed() { GLOBAL fixed = 2 }
+TRY { try_fixed() } FAIL e { PRINT(e.message) }
+FUNC no_outside() { GLOBAL missing += 1 }
+TRY { no_outside() } FAIL e { PRINT(e.message) }
+>> At the top of the file, GLOBAL changes nothing
+GLOBAL top = "top"
+PRINT(top)

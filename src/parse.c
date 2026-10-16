@@ -26,7 +26,7 @@ static const Op LEVELS[][5] = {
 
 enum {
     KW_IF, KW_ELIF, KW_ELSEIF, KW_ELSE, KW_WHILE, KW_REPEAT, KW_FOR, KW_IN, KW_TO, KW_STEP, KW_BREAK, KW_SKIP,
-    KW_FUNC, KW_RETURN, KW_LOCAL, KW_CONST, KW_START, KW_TRY, KW_FAIL, KW_GOTO, KW_POINT, KW_IMPORT, KW_LOAD, KW_END, KW_TRUE,
+    KW_FUNC, KW_RETURN, KW_LOCAL, KW_GLOBAL, KW_CONST, KW_START, KW_TRY, KW_FAIL, KW_GOTO, KW_POINT, KW_IMPORT, KW_LOAD, KW_END, KW_TRUE,
     KW_FALSE, KW_NULL, KW_UNDEFINE, KW_INSERT, KW_DROP
 };
 
@@ -314,6 +314,18 @@ static Stmt *expr_or_assign(Parser *p, int line) {
     return s;
 }
 
+/// FUNC name(...) { ... } as a statement, with FUNC (and GLOBAL) already read.
+static Stmt *func_stmt(Parser *p, int line) {
+    advance(p);
+    Str *name = expect_name(p, "a function name");
+    if (!name) return NULL;
+    FuncDecl *d = func_rest(p, name);
+    if (!d) return NULL;
+    Stmt *s = new_stmt(S_FUNC, line);
+    s->fn = d;
+    return s;
+}
+
 static Stmt *statement(Parser *p) {
     int line = line_of(p);
     Token *t = peek(p);
@@ -335,6 +347,13 @@ static Stmt *statement(Parser *p) {
         s = new_stmt(S_FOR_IN, line);
         return for_stmt(p, s) ? s : NULL;
     case KW_FUNC:
+        // FUNC GLOBAL name(...) is the same as GLOBAL FUNC name(...).
+        if (peek_at(p, 1)->k == T_KW && peek_at(p, 1)->kw == KW_GLOBAL && peek_at(p, 2)->k == T_NAME) {
+            advance(p);
+            s = func_stmt(p, line);
+            if (s) s->global = true;
+            return s;
+        }
         if (peek_at(p, 1)->k != T_NAME) return expr_or_assign(p, line);
         {
             advance(p);
@@ -383,6 +402,31 @@ static Stmt *statement(Parser *p) {
             s->e = expr(p);
             if (!s->e) return NULL;
         }
+        return s;
+    case KW_GLOBAL:
+        advance(p);
+        if (is_kw(p, KW_FUNC) && peek_at(p, 1)->k == T_NAME) {
+            s = func_stmt(p, line);
+        } else if (is_kw(p, KW_CONST)) {
+            s = statement(p);
+        } else {
+            if (peek(p)->k != T_NAME) {
+                pfail(p, "GLOBAL goes before a name that gets a value (GLOBAL score = 0), FUNC or CONST");
+                return NULL;
+            }
+            Str *name = peek(p)->s;
+            s = expr_or_assign(p, line);
+            if (!s) return NULL;
+            if (s->k != S_ASSIGN) {
+                pfail(p, "GLOBAL %s needs a value: GLOBAL %s = ...", name->s, name->s);
+                return NULL;
+            }
+            if (s->e->k != E_VAR) {
+                pfail(p, "GLOBAL goes before a name, not a table entry. %s is the outside one already when the function has no %s of its own", name->s, name->s);
+                return NULL;
+            }
+        }
+        if (s) s->global = true;
         return s;
     case KW_CONST:
         advance(p);
