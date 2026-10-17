@@ -1,12 +1,13 @@
 100 [name: "Ann", bag: [1, 2]]
 [1, 2, 3] [1, 2]
-[1, 2, 3]
+[2, 3, 4]
 105 105
 max_hp is a constant (CONST), so it can't be changed
 max_hp is a constant (CONST), so it can't be changed
 this is a constant (CONST), so it can't be changed
 this is a constant (CONST), so it can't be changed
 this is a constant (CONST), so it can't be changed
+b is a constant (CONST), so it can't be changed
 max_hp is a constant (CONST), so it can't be changed
 max_hp is a constant (CONST), so it can't be changed
 this is a constant (CONST), so it can't be changed

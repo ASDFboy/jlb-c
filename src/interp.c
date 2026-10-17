@@ -132,11 +132,6 @@ static long resolve(int64_t p, size_t len) {
     return i >= 0 && i < n ? (long)i : -1;
 }
 
-/// Only tables and text can be changed in place, so only they are truly shared by `@`.
-static bool shareable(Value v) {
-    return v.t == V_TABLE || v.t == V_TEXT;
-}
-
 static const char *fname(Function *f) {
     return f->decl->name ? f->decl->name->s : "FUNCTION";
 }
@@ -932,7 +927,7 @@ static LoopEntry *loop_entries(Interp *it, Expr *iter, bool want_slots, size_t *
 }
 
 static Slot *bind_slot(bool shared, Slot *s) {
-    if (shared && shareable(s->v)) return slot_ref(s);
+    if (shared) return slot_ref(s);
     return slot_new(v_copy(v_retain(s->v)));
 }
 
@@ -1053,13 +1048,9 @@ static bool lvalue_slot(Interp *it, Expr *e, Slot **out) {
 static bool share_slot(Interp *it, Expr *e, Slot **out) {
     if (is_lvalue(e)) {
         Slot *s;
+        // Every kind of value is shared: both names hold the same variable.
         if (!lvalue_slot(it, e, &s)) return false;
-        if (shareable(s->v)) {
-            *out = s;
-            return true;
-        }
-        *out = slot_new(v_retain(s->v));
-        slot_unref(s);
+        *out = s;
         return true;
     }
     Value v;

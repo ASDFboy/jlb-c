@@ -31,6 +31,19 @@ n1 = 5
 n2 @= n1
 n2 += 1
 PRINT(n1, n2)
+DEF bump(@n) { n += 1 }
+bump(n1)
+lives = 3
+FOR @x IN [lives] { x += 1 }
+nums = [1, 2]
+FOR @x IN nums { x *= 10 }
+flag @= nums[1]
+flag = TRUE
+done = FALSE
+same @= done
+same = TRUE
+bump(4)
+PRINT(n1, n2, lives, nums, done)
 nested = [inv: ["sword"]]
 copy = nested
 copy.inv[1] = "axe"

@@ -8,7 +8,8 @@
 [[health: 20], [health: 40]]
 [[health: 1], [health: 2]]
 Glex Alex Glex
-5 6
+6 6
+7 7 3 [TRUE, 20] TRUE
 [inv: ["sword"]]
 [inv: ["axe"]]
 [health: 65]
