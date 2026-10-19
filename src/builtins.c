@@ -1,5 +1,6 @@
 // Built-in commands (ALL CAPS).
 
+#include <errno.h>
 #include <math.h>
 #include <wctype.h>
 
@@ -722,6 +723,25 @@ bool call_builtin(Interp *it, int bi, Value *a, int n, Value *out) {
         free(p);
         free(data);
         if (ok) *out = NULL_VALUE;
+        return ok;
+    }
+    if (IS("DELETE")) {
+        if (!count(name, n, 1, 1)) return false;
+        char *p = display(a[0]);
+        bool ok = false;
+        if (!path_exists(p)) {
+            fail("couldn't delete %s: there's no such file", p);
+        } else if (!path_is_file(p)) {
+            fail("couldn't delete %s: it's a folder, and DELETE only removes files", p);
+        } else if (remove(p) != 0) {
+            char *e = os_error(errno);
+            fail("couldn't delete the file %s: %s", p, e);
+            free(e);
+        } else {
+            ok = true;
+            *out = NULL_VALUE;
+        }
+        free(p);
         return ok;
     }
     if (IS("EXISTS")) {

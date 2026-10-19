@@ -1,0 +1,5 @@
+TRUE
+FALSE
+couldn't delete old_save.txt: there's no such file
+couldn't delete .: it's a folder, and DELETE only removes files
+TRUE NULL FALSE

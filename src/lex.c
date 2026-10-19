@@ -13,7 +13,7 @@ const char *const WORDS[] = {
     "LOWER", "SPLIT", "JOIN", "FIND", "ABS", "MIN", "MAX", "TABLE_MIN", "TABLE_MAX", "SIN", "COS",
     "TAN", "CSC", "SEC", "COT", "ASIN", "ACOS", "ATAN", "RAD_SIN", "RAD_COS", "RAD_TAN", "RAD_CSC",
     "RAD_SEC", "RAD_COT", "RAD_ASIN", "RAD_ACOS", "RAD_ATAN", "PI", "SORT", "ALPHA_SORT", "KEYS",
-    "AWAIT", "DONE", "CANCEL", "CLEAR",
+    "AWAIT", "DONE", "CANCEL", "CLEAR", "DELETE",
     // graphics (graphics.c): keep WINDOW first and DRAW_TO second
     "WINDOW", "DRAW_TO", "SHOW", "FPS", "WINDOW_OPEN", "WINDOW_CLOSE", "WINDOW_TITLE", "WINDOW_RESIZE", "WINDOW_SET",
     "STYLE", "RESET_STYLE", "RGB", "CLEAR_WINDOW", "PIXEL", "GET_PIXEL", "LINE", "LINES", "ARROW", "CURVE", "RECT", "CIRCLE",
@@ -23,7 +23,7 @@ const char *const WORDS[] = {
     "ON_MOUSE_MOVE", "ON_TYPE", "ON_RESIZE", "ON_CLOSE",
 };
 const int N_KEYWORDS = 31;
-const int GFX_FIRST = 87; // WORDS[87] is "WINDOW" (checked in graphics.c)
+const int GFX_FIRST = 88; // WORDS[88] is "WINDOW" (checked in graphics.c)
 const int N_WORDS = (int)(sizeof WORDS / sizeof WORDS[0]);
 
 // Longest first, so "!===" wins over "!==" and so on (the same order as the Op enum).

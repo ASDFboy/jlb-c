@@ -1,0 +1,9 @@
+>> DELETE removes a file.
+WRITE("old_save.txt", "level 3")
+PRINT(EXISTS("old_save.txt"))
+DELETE("old_save.txt")
+PRINT(EXISTS("old_save.txt"))
+TRY { DELETE("old_save.txt") } FAIL e { PRINT(e.message) }
+WRITE("keep.txt", "x")
+TRY { DELETE(".") } FAIL e { PRINT(e.message) }
+PRINT(EXISTS("keep.txt"), DELETE("keep.txt"), EXISTS("keep.txt"))
