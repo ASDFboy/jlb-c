@@ -417,7 +417,9 @@ static Stmt *statement(Parser *p) {
             Str *name = peek(p)->s;
             s = expr_or_assign(p, line);
             if (!s) return NULL;
-            if (s->k != S_ASSIGN) {
+            if (s->k == S_EXPR && s->e->k == E_VAR) {
+                // GLOBAL name by itself: makes the outside name (NULL until given a value).
+            } else if (s->k != S_ASSIGN) {
                 pfail(p, "GLOBAL %s needs a value: GLOBAL %s = ...", name->s, name->s);
                 return NULL;
             }

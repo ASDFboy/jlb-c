@@ -478,6 +478,12 @@ static void create_var(Interp *it, Str *name, Slot *s) {
     else om_insert(&f->env->map, name, s);
 }
 
+/// `name` on a line by itself: a new variable holding NULL (the function's own, inside a
+/// function, like LOCAL), unless the name already has a value here.
+static void declare(Interp *it, Str *name) {
+    if (!lookup_own(it, name)) create_var(it, name, slot_new(NULL_VALUE));
+}
+
 /// Giving a value to a name: inside a function it's the function's own (a new local
 /// unless it already is one); GLOBAL is how a function changes an outside name.
 bool set_var(Interp *it, Str *name, Value v) {
@@ -646,6 +652,11 @@ static Flow exec_kind(Interp *it, Stmt *s) {
     if (s->global) return exec_global(it, s) ? F_NORMAL : F_ERR;
     switch (s->k) {
     case S_EXPR: {
+        // A name by itself makes that variable, with NULL, unless it already has a value.
+        if (s->e->k == E_VAR) {
+            declare(it, s->e->name);
+            return F_NORMAL;
+        }
         Value v;
         if (!eval(it, s->e, &v)) return F_ERR;
         v_release(v);
@@ -1153,6 +1164,11 @@ static bool assign_entry(Interp *it, Slot *bs, const Key *key, Op op, Expr *rhs)
 /// even inside a function.
 static bool exec_global(Interp *it, Stmt *s) {
     OrdMap *env = &top(it)->env->map;
+    // GLOBAL name by itself: the outside name, made with NULL if it has no value yet.
+    if (s->k == S_EXPR) {
+        if (!om_gets(env, s->e->name)) om_insert(env, s->e->name, slot_new(NULL_VALUE));
+        return true;
+    }
     if (s->k == S_CONST) {
         if (om_gets(env, s->name))
             return fail("%s already has an outside value, so CONST can't make it a constant. Use CONST where %s first gets its value", s->name->s, s->name->s);
@@ -1998,6 +2014,7 @@ static int run_snippet_code(Interp *it, const char *text, Value *out) {
     if (prog.n == 1 && prog.s[0]->k == S_EXPR) {
         Stmt *s = prog.s[0];
         top(it)->line = s->line;
+        if (s->e->k == E_VAR) declare(it, s->e->name);
         Value v;
         if (!eval(it, s->e, &v)) {
             capture(it, s->line);

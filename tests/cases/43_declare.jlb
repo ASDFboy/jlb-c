@@ -1,0 +1,28 @@
+>> A name by itself makes a variable holding NULL (unless it already has a value).
+save_data
+PRINT(save_data, TYPE(save_data))
+score = 5
+score
+PRINT(score)
+outside = "out"
+DEF f() {
+    outside
+    PRINT(outside)
+    tries
+    tries = 3
+    GLOBAL made_here
+    GLOBAL made_here = 1
+    RETURN tries
+}
+PRINT(f(), outside, made_here)
+DEF g() { GLOBAL fresh }
+g()
+PRINT(fresh)
+FOR i IN 1 TO 2 { inner }
+PRINT(inner)
+CONST k = 1
+k
+PRINT(k)
+DEF h() { }
+h
+PRINT(TYPE(h))

@@ -61,7 +61,7 @@ def ide_mode_crash_report():
 
 
 def repl_mode():
-    stdin = f'x = 5\n{M}\nx * 2\n{M}\n"25" * 2\n{M}\nPRINT(x)\n{M}\nx / 0\n{M}\n{M}RESET\nx\n{M}\n'
+    stdin = f'x = 5\n{M}\nx * 2\n{M}\n"25" * 2\n{M}\nPRINT(x)\n{M}\nx / 0\n{M}\n{M}RESET\nx + 1\n{M}\n'
     out, _, code = jlb(["--repl"], stdin)
     lines = out.split("\n")
     check("repl exit", code == 0, code)
