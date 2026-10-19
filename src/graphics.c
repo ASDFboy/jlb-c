@@ -16,7 +16,7 @@
 // The commands, in the order they're listed in WORDS (lex.c).
 enum {
     B_WINDOW, B_DRAW_TO, B_SHOW, B_FPS, B_WINDOW_OPEN, B_WINDOW_CLOSE, B_WINDOW_TITLE, B_WINDOW_RESIZE, B_WINDOW_SET,
-    B_STYLE, B_RESET_STYLE, B_RGB, B_CLEAR, B_PIXEL, B_GET_PIXEL, B_LINE, B_LINES, B_ARROW, B_CURVE, B_RECT, B_CIRCLE,
+    B_STYLE, B_RESET_STYLE, B_RGB, B_CLEAR_WINDOW, B_PIXEL, B_GET_PIXEL, B_LINE, B_LINES, B_ARROW, B_CURVE, B_RECT, B_CIRCLE,
     B_ELLIPSE, B_TRIANGLE, B_POLYGON, B_NGON, B_STAR, B_ARC, B_PIE, B_FLOOD, B_TEXT, B_TEXT_SIZE, B_FONT, B_IMAGE,
     B_IMAGE_NEW, B_PART, B_DRAW, B_SAVE_IMAGE, B_SCREENSHOT, B_CAMERA, B_KEY_DOWN, B_KEY_PRESSED, B_KEY_RELEASED,
     B_KEYS_DOWN, B_TYPED, B_MOUSE, B_MOUSE_PRESSED, B_MOUSE_RELEASED, B_ON_KEY, B_ON_KEY_UP, B_ON_CLICK,
@@ -843,7 +843,7 @@ bool gfx_builtin(Interp *it, int bi, Value *a, int n, Value *out) {
         *out = v_double(gfx_color_to_number((uint32_t)c[3] << 24 | (uint32_t)c[0] << 16 | (uint32_t)c[1] << 8 | (uint32_t)c[2]));
         return true;
     }
-    case B_CLEAR: {
+    case B_CLEAR_WINDOW: {
         if (!argc(name, n, 0, 1)) return false;
         uint32_t c = 0xFF000000u;
         if (n && !color(name, a[0], &c)) return false;

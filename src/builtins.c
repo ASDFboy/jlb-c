@@ -10,6 +10,7 @@
 #include <windows.h>
 #else
 #include <time.h>
+#include <unistd.h>
 #endif
 
 void out_write(const char *s, size_t n) {
@@ -18,6 +19,28 @@ void out_write(const char *s, size_t n) {
 
 void out_flush(void) {
     fflush(stdout);
+}
+
+/// CLEAR: wipes what's been printed. An editor (--ide, --repl) is sent a form feed and
+/// clears its output itself; a terminal gets the codes that clear its screen and
+/// scrollback. Output going to a file or another program is left alone.
+static void clear_output(Interp *it) {
+    if (it->ide) {
+        out_write("\f", 1);
+    } else {
+#ifdef _WIN32
+        // Windows consoles understand the codes once asked to (Windows 10 and later).
+        HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
+        DWORD mode;
+        if (!GetConsoleMode(h, &mode)) return;
+        if (!(mode & 0x0004)) SetConsoleMode(h, mode | 0x0004); // ENABLE_VIRTUAL_TERMINAL_PROCESSING
+#else
+        if (!isatty(fileno(stdout))) return;
+#endif
+        out_flush();
+        out_write("\033[H\033[2J\033[3J", 11);
+    }
+    out_flush();
 }
 
 static bool count(const char *name, int n, int min, int max) {
@@ -569,6 +592,12 @@ bool call_builtin(Interp *it, int bi, Value *a, int n, Value *out) {
         out_write(s.p, s.len);
         buf_free(&s);
         if (it->ide) out_flush();
+        *out = NULL_VALUE;
+        return true;
+    }
+    if (IS("CLEAR")) {
+        if (n) return fail("CLEAR wipes what's been printed, so it takes no inputs. To fill a window with a color, use CLEAR_WINDOW(color)");
+        clear_output(it);
         *out = NULL_VALUE;
         return true;
     }

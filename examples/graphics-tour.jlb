@@ -56,7 +56,7 @@ WHILE WINDOW_OPEN() {
     spin = TIME() * 60
     STYLE([smooth: smooth])
     >> (STYLE sets options for every command below; a command's own options add to it.)
-    CLEAR(RGB(20, 24, 40))
+    CLEAR_WINDOW(RGB(20, 24, 40))
 
     >> Title bar
     RECT(1, 300, 480, 28, "navy", [anchor: 1])

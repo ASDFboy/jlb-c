@@ -1,0 +1,6 @@
+>> CLEAR wipes what was printed; written to a file, it leaves nothing behind.
+PRINT("before")
+CLEAR()
+PRINT("after")
+TRY { CLEAR(1) } FAIL e { PRINT(e.message) }
+PRINT(TYPE(CLEAR))

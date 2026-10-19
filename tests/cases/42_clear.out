@@ -1,0 +1,4 @@
+before
+after
+CLEAR wipes what's been printed, so it takes no inputs. To fill a window with a color, use CLEAR_WINDOW(color)
+FUNCTION

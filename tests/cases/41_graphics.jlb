@@ -16,7 +16,7 @@ PRINT(RGB(255, 136, 0) == 0xFF8800, RGB(1, 2, 3, 0) == 0xFF010203)
 >> Copies share until one is drawn into.
 copy = pic
 DRAW_TO(copy)
-CLEAR("black")
+CLEAR_WINDOW("black")
 PRINT(GET_PIXEL(20, 20))
 DRAW_TO(pic)
 PRINT(GET_PIXEL(20, 20) == 0xFFFFFF, copy === pic, copy == copy)
