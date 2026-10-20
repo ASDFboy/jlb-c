@@ -1,0 +1,34 @@
+>> A type before an input (DEF f(TEXT name)) checks what the function is given.
+DEF greet(TEXT name, NUMBER times = 1) { RETURN name * times }
+PRINT(greet("hi", 2), greet("yo"), greet("a", NULL))
+TRY { greet(5) } FAIL e { PRINT(e.message) }
+TRY { greet("a", "b") } FAIL e { PRINT(e.message) }
+DEF inner(TEXT s) {
+    TRY { s = 1 } FAIL e { PRINT(e.message) }
+    RETURN s
+}
+PRINT(inner("ok"))
+DEF lose(NUMBER @lives) { lives -= 1 }
+n = 3
+lose(n)
+n = "now text is fine again"
+PRINT(n)
+DEF hurt(@NUMBER hp) { hp = "x" }
+m = 5
+TRY { hurt(m) } FAIL e { PRINT(e.message) }
+m = "untyped after the call"
+PRINT(m)
+TEXT label = "a"
+TRY { lose(label) } FAIL e { PRINT(e.message) }
+label = "still text"
+TRY { label = 1 } FAIL e { PRINT(e.message) }
+DEF two(NUMBER @a, TEXT @b) { }
+q = 1
+TRY { two(q, q) } FAIL e { PRINT(e.message) }
+q = "free"
+PRINT(q)
+f = DEF(TABLE t) { RETURN LEN(t) }
+PRINT(f([1, 2]))
+TRY { f("no") } FAIL e { PRINT(e.message) }
+DEF any(...rest) { RETURN rest }
+PRINT(any(1, 2))

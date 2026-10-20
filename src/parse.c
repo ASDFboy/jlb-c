@@ -330,12 +330,26 @@ static Stmt *func_stmt(Parser *p, int line) {
 }
 
 /// NUMBER, TEXT, TABLE ... right before a variable's name.
+/// The type a word names before a variable: NUMBER, TEXT ..., and STR (STR( is the
+/// conversion command) means TEXT too (STRING is read as TEXT already).
+static const char *type_named(int kw) {
+    if (strcmp(WORDS[kw], "STR") == 0) return "TEXT";
+    for (size_t i = 0; i < sizeof TYPE_WORDS / sizeof TYPE_WORDS[0]; i++)
+        if (strcmp(WORDS[kw], TYPE_WORDS[i]) == 0) return TYPE_WORDS[i];
+    return NULL;
+}
+
 static const char *type_word(Parser *p) {
     Token *t = peek(p);
     if (t->k != T_KW || peek_at(p, 1)->k != T_NAME) return NULL;
-    for (size_t i = 0; i < sizeof TYPE_WORDS / sizeof TYPE_WORDS[0]; i++)
-        if (strcmp(WORDS[t->kw], TYPE_WORDS[i]) == 0) return TYPE_WORDS[i];
-    return NULL;
+    return type_named(t->kw);
+}
+
+/// A type before a function's input: NUMBER n, or NUMBER @n.
+static const char *input_type(Parser *p) {
+    Token *t = peek(p), *n = peek_at(p, 1);
+    if (t->k != T_KW || !(n->k == T_NAME || (n->k == T_OP && n->op == OP_AT))) return NULL;
+    return type_named(t->kw);
 }
 
 /// After NUMBER (or another type): `name`, or `name = ...` and the other assignments.
@@ -546,9 +560,17 @@ static FuncDecl *func_rest(Parser *p, Str *name) {
             advance(p);
             rest = true;
         }
+        // A type can come before the name: DEF f(TEXT name, NUMBER @lives) (or @NUMBER lives).
+        const char *ty = input_type(p);
+        if (ty) advance(p);
         if (is_op(p, OP_AT)) {
             advance(p);
             shared = true;
+        }
+        if (!ty && (ty = input_type(p))) advance(p);
+        if (rest && ty) {
+            pfail(p, "an input with ... always collects a table, so it can't have a type");
+            return NULL;
         }
         Str *pname = expect_name(p, "an input name");
         if (!pname) return NULL;
@@ -587,6 +609,7 @@ static FuncDecl *func_rest(Parser *p, Str *name) {
         pr->shared = shared;
         pr->rest = rest;
         pr->def = def;
+        pr->ty = ty;
         if (is_op(p, OP_COMMA)) {
             advance(p);
         } else if (!is_op(p, OP_RPAREN)) {

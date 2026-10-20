@@ -1,0 +1,8 @@
+FALSE TRUE TRUE FALSE TRUE FALSE
+FALSE TRUE TRUE FALSE TRUE FALSE
+continued onto the next line
+8 NULL
+5Ann TEXT
+name is a TEXT variable, so it can't hold a NUMBER value
+hi Bo
+who is a TEXT input of hello, so it can't be given a NUMBER value

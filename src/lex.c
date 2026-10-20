@@ -34,9 +34,22 @@ const char *const OP_TEXT[OP_COUNT] = {
     ".", ":", ";",
 };
 
+/// Logic operators written as words: AND means &&, OR means ||, and so on. OP_NONE if not.
+static Op word_op(const char *w) {
+    static const struct {
+        const char *word;
+        Op op;
+    } WORD_OPS[] = {{"AND", OP_ANDS}, {"OR", OP_ORS}, {"NAND", OP_NANDS}, {"NOR", OP_NORS}, {"XOR", OP_XOR}, {"XNOR", OP_XNOR}};
+    for (size_t i = 0; i < sizeof WORD_OPS / sizeof WORD_OPS[0]; i++)
+        if (strcmp(w, WORD_OPS[i].word) == 0) return WORD_OPS[i].op;
+    return OP_NONE;
+}
+
 int find_word(const char *w, size_t n) {
     // FUNC is the older name for DEF, and still works.
     if (n == 4 && memcmp(w, "FUNC", 4) == 0) w = "DEF", n = 3;
+    // RTRN is short for RETURN.
+    if (n == 4 && memcmp(w, "RTRN", 4) == 0) w = "RETURN", n = 6;
     // STRING is another name for TEXT (in NUMBER/TEXT/... variable types).
     if (n == 6 && memcmp(w, "STRING", 6) == 0) w = "TEXT", n = 4;
     for (int i = 0; i < N_WORDS; i++) {
@@ -305,7 +318,11 @@ bool lex(const char *src, size_t len, Tokens *out, SyntaxError *err) {
                 if (word[k] >= 'a' && word[k] <= 'z') lower = true;
             }
             word[wl] = 0;
-            if (upper && !lower) {
+            if (upper && !lower && word_op(word) != OP_NONE) {
+                Token t = tok_of(T_OP, line, start_pos);
+                t.op = word_op(word);
+                push(out, t);
+            } else if (upper && !lower) {
                 int k = find_word(word, wl);
                 if (k < 0) {
                     ok = lex_fail(err, line, start_pos, "%s isn't a command .jlb knows (your own names must be lowercase)", word);
@@ -319,7 +336,7 @@ bool lex(const char *src, size_t len, Tokens *out, SyntaxError *err) {
                 char *up = xstrdup(word);
                 for (char *p = up; *p; p++)
                     if (*p >= 'a' && *p <= 'z') *p = (char)(*p - 'a' + 'A');
-                if (find_word(up, wl) >= 0) {
+                if (find_word(up, wl) >= 0 || word_op(up) != OP_NONE) {
                     ok = lex_fail(err, line, start_pos, "did you mean %s? Built-in commands are written in ALL CAPS", up);
                 } else {
                     char *sn = snake(word);

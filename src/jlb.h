@@ -426,6 +426,7 @@ typedef struct {
     bool shared;
     bool rest;
     Expr *def;
+    const char *ty; // DEF f(NUMBER n): the type the input must have (NULL is always allowed)
 } Param;
 
 struct FuncDecl {

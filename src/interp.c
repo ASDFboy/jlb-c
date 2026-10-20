@@ -1826,8 +1826,11 @@ static bool eval(Interp *it, Expr *e, Value *out) {
 
 // ---------- calling functions ----------
 
-static bool run_call(Interp *it, Function *func, Slot **vals, int nvals, Value *out) {
+/// Puts a call's inputs in the new frame (checking typed ones). Shared (@) inputs typed only
+/// for this call are added to `typed` (to be untyped when it ends).
+static bool bind_inputs(Interp *it, Function *func, Slot **vals, int nvals, Slot **typed, int *ntyped) {
     FuncDecl *d = func->decl;
+    const char *fn_name = d->name ? d->name->s : "this function";
     int k = 0;
     for (int i = 0; i < d->nparams; i++) {
         Param *p = &d->params[i];
@@ -1851,9 +1854,36 @@ static bool run_call(Interp *it, Function *func, Slot **vals, int nvals, Value *
         } else {
             return fail("%s is required (it's an input of %s)", p->name->s, fname(func));
         }
+        if (p->ty) {
+            const char *vt = v_type(slot->v);
+            if (slot->v.t != V_NULL && strcmp(vt, p->ty) != 0) {
+                slot_unref(slot);
+                return fail("%s is %s %s input of %s, so it can't be given %s %s value", p->name->s, a_an(p->ty), p->ty, fn_name, a_an(vt), vt);
+            }
+            if (slot->ty && strcmp(slot->ty, p->ty) != 0) {
+                slot_unref(slot);
+                return fail("%s is %s %s input of %s, so it can't share %s %s variable", p->name->s, a_an(p->ty), p->ty, fn_name, a_an(slot->ty), slot->ty);
+            }
+            if (!slot->ty) {
+                slot->ty = p->ty;
+                // A shared (@) input is the caller's own variable: it's only typed during the call.
+                if (p->shared) typed[(*ntyped)++] = slot;
+            }
+        }
         om_insert(&top(it)->scopes.s[0], p->name, slot);
     }
-    Flow f = exec_block(it, &d->body);
+    return true;
+}
+
+static bool run_call(Interp *it, Function *func, Slot **vals, int nvals, Value *out) {
+    FuncDecl *d = func->decl;
+    Slot *small[8];
+    Slot **typed = d->nparams <= 8 ? small : xmalloc((size_t)d->nparams * sizeof(Slot *));
+    int ntyped = 0;
+    bool bound = bind_inputs(it, func, vals, nvals, typed, &ntyped);
+    Flow f = bound ? exec_block(it, &d->body) : F_ERR;
+    for (int i = 0; i < ntyped; i++) typed[i]->ty = NULL;
+    if (typed != small) free(typed);
     if (f == F_ERR) return false;
     if (f == F_RETURN) {
         *out = it->ret;

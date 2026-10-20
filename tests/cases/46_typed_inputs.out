@@ -1,0 +1,15 @@
+hihi yo a
+name is a TEXT input of greet, so it can't be given a NUMBER value
+times is a NUMBER input of greet, so it can't be given a TEXT value
+s is a TEXT variable, so it can't hold a NUMBER value
+ok
+now text is fine again
+hp is a NUMBER variable, so it can't hold a TEXT value
+untyped after the call
+lives is a NUMBER input of lose, so it can't be given a TEXT value
+label is a TEXT variable, so it can't hold a NUMBER value
+b is a TEXT input of two, so it can't be given a NUMBER value
+free
+2
+t is a TABLE input of this function, so it can't be given a TEXT value
+[1, 2]
