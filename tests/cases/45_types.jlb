@@ -1,0 +1,55 @@
+>> A type before a name (NUMBER score) makes a variable that only takes that type, or NULL.
+NUMBER score = 10
+score += 5
+PRINT(score)
+TRY { score = "lots" } FAIL e { PRINT(e.message) }
+TRY { score += "x" } FAIL e { PRINT(e.message) }
+score = NULL
+PRINT(score)
+STRING name = "Ann"
+PRINT(name, TYPE(name))
+TRY { name = 5 } FAIL e { PRINT(e.message) }
+TABLE bag
+PRINT(bag)
+bag = [1, 2]
+bag += 3
+PRINT(bag)
+TRY { bag = "none" } FAIL e { PRINT(e.message) }
+BOOL ready = FALSE
+TRY { ready = 1 } FAIL e { PRINT(e.message) }
+FUNCTION on_hit = DEF(n) { RETURN n * 2 }
+PRINT(on_hit(4))
+TRY { on_hit = 3 } FAIL e { PRINT(e.message) }
+TRY { NUMBER bad = "7" } FAIL e { PRINT(e.message) }
+plain = "hi"
+TRY { NUMBER plain } FAIL e { PRINT(e.message) }
+TRY { TEXT score } FAIL e { PRINT(e.message) }
+NUMBER score
+PRINT(score)
+NUMBER lives = 3
+DEF lose(@n) { n -= 1 }
+lose(lives)
+PRINT(lives)
+DEF spoil(@n) { n = "zero" }
+TRY { spoil(lives) } FAIL e { PRINT(e.message) }
+alias @= lives
+TRY { alias = "x" } FAIL e { PRINT(e.message) }
+other = "text"
+TRY { lives @= other } FAIL e { PRINT(e.message) }
+DEF f() {
+    NUMBER count = 0
+    count += 1
+    LOCAL TEXT label = "n"
+    TRY { label = 1 } FAIL e { PRINT(e.message) }
+    GLOBAL NUMBER best = 9
+    RETURN count
+}
+PRINT(f(), best)
+TRY { best = "x" } FAIL e { PRINT(e.message) }
+CONST NUMBER max_hp = 100
+TRY { CONST NUMBER oops = "a" } FAIL e { PRINT(e.message) }
+p = IMAGE_NEW(2, 2)
+IMAGE pic = p
+TRY { pic = 1 } FAIL e { PRINT(e.message) }
+FOR i IN 1 TO 3 { NUMBER total = i }
+PRINT(total)

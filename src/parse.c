@@ -27,8 +27,11 @@ static const Op LEVELS[][5] = {
 enum {
     KW_IF, KW_ELIF, KW_ELSEIF, KW_ELSE, KW_WHILE, KW_REPEAT, KW_FOR, KW_IN, KW_TO, KW_STEP, KW_BREAK, KW_SKIP,
     KW_FUNC, KW_RETURN, KW_LOCAL, KW_GLOBAL, KW_CONST, KW_START, KW_TRY, KW_FAIL, KW_GOTO, KW_POINT, KW_IMPORT, KW_LOAD, KW_END, KW_TRUE,
-    KW_FALSE, KW_NULL, KW_UNDEFINE, KW_INSERT, KW_DROP
+    KW_FALSE, KW_NULL, KW_UNDEFINE, KW_INSERT, KW_DROP, KW_NUMBER, KW_BOOL, KW_TABLE, KW_FUNCTION, KW_TASK
 };
+
+/// The types a variable can be declared with (NUMBER score = 0).
+const char *const TYPE_WORDS[] = {"NUMBER", "TEXT", "BOOL", "TABLE", "FUNCTION", "TASK", "IMAGE", "WINDOW", "FONT"};
 
 static bool in_level(int lvl, Op o) {
     // The comparison level has six operators.
@@ -326,8 +329,35 @@ static Stmt *func_stmt(Parser *p, int line) {
     return s;
 }
 
+/// NUMBER, TEXT, TABLE ... right before a variable's name.
+static const char *type_word(Parser *p) {
+    Token *t = peek(p);
+    if (t->k != T_KW || peek_at(p, 1)->k != T_NAME) return NULL;
+    for (size_t i = 0; i < sizeof TYPE_WORDS / sizeof TYPE_WORDS[0]; i++)
+        if (strcmp(WORDS[t->kw], TYPE_WORDS[i]) == 0) return TYPE_WORDS[i];
+    return NULL;
+}
+
+/// After NUMBER (or another type): `name`, or `name = ...` and the other assignments.
+static Stmt *typed_rest(Parser *p, const char *ty, int line) {
+    Str *name = peek(p)->s;
+    Stmt *s = expr_or_assign(p, line);
+    if (!s) return NULL;
+    if ((s->k != S_EXPR && s->k != S_ASSIGN) || s->e->k != E_VAR) {
+        pfail(p, "%s goes before a variable's name: %s %s or %s %s = ...", ty, ty, name->s, ty, name->s);
+        return NULL;
+    }
+    s->ty = ty;
+    return s;
+}
+
 static Stmt *statement(Parser *p) {
     int line = line_of(p);
+    const char *ty = type_word(p);
+    if (ty) {
+        advance(p);
+        return typed_rest(p, ty, line);
+    }
     Token *t = peek(p);
     if (t->k != T_KW) return expr_or_assign(p, line);
     int k = t->kw;
@@ -394,7 +424,10 @@ static Stmt *statement(Parser *p) {
             return NULL;
         }
         advance(p);
+        ty = type_word(p);
+        if (ty) advance(p);
         s = new_stmt(S_LOCAL, line);
+        s->ty = ty;
         s->name = expect_name(p, "a variable name after LOCAL");
         if (!s->name) return NULL;
         if (is_op(p, OP_SET)) {
@@ -407,7 +440,7 @@ static Stmt *statement(Parser *p) {
         advance(p);
         if (is_kw(p, KW_FUNC) && peek_at(p, 1)->k == T_NAME) {
             s = func_stmt(p, line);
-        } else if (is_kw(p, KW_CONST)) {
+        } else if (is_kw(p, KW_CONST) || type_word(p)) {
             s = statement(p);
         } else {
             if (peek(p)->k != T_NAME) {
@@ -432,7 +465,10 @@ static Stmt *statement(Parser *p) {
         return s;
     case KW_CONST:
         advance(p);
+        ty = type_word(p);
+        if (ty) advance(p);
         s = new_stmt(S_CONST, line);
+        s->ty = ty;
         s->name = expect_name(p, "a name after CONST");
         if (!s->name) return NULL;
         if (!is_op(p, OP_SET)) {

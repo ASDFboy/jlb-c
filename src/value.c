@@ -111,6 +111,7 @@ Slot *slot_new(Value v) {
     Slot *s = xmalloc(sizeof(Slot));
     s->rc = 1;
     s->constant = false;
+    s->ty = NULL;
     s->v = v;
     return s;
 }

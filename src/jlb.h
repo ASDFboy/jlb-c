@@ -233,6 +233,7 @@ struct Value {
 struct Slot {
     int rc;
     bool constant; // made by CONST: nothing in it can change
+    const char *ty; // the type it was declared with (NUMBER score), or NULL
     Value v;
 };
 
@@ -447,6 +448,7 @@ struct Stmt {
     Str *name, *name2;  // loop variables, LOCAL, TRY's FAIL name, GOTO/POINT, file names
     bool shared, shared2, has2;
     bool global;        // GLOBAL before an S_ASSIGN, S_FUNC or S_CONST: the file's outside name
+    const char *ty;     // NUMBER score = 0 (or TEXT, TABLE ...): before an S_EXPR name, S_ASSIGN, S_LOCAL or S_CONST
     Block body, body2;  // loops, TRY/FAIL, ELSE (body2) ...
     Expr **conds;       // S_IF: each condition
     Block *blocks;      // S_IF: each branch

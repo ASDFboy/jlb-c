@@ -226,6 +226,33 @@ static bool const_name(const Slot *s, const Str *name) {
     return true;
 }
 
+static const char *a_an(const char *t) {
+    return strchr("AEIOU", t[0]) ? "an" : "a";
+}
+
+/// Whether `v` can go in a variable declared as `ty` (NULL always can).
+static bool fits(const char *ty, Value v, const char *name) {
+    const char *vt = v_type(v);
+    if (v.t == V_NULL || strcmp(vt, ty) == 0) return true;
+    return fail("%s is %s %s variable, so it can't hold %s %s value", name, a_an(ty), ty, a_an(vt), vt);
+}
+
+/// A typed variable only takes values of its type.
+static bool type_ok(const Slot *s, Value v, const char *name) {
+    return !s->ty || fits(s->ty, v, name);
+}
+
+/// `a @= b` when `a` was declared with a type: b's value must fit, and the variable they
+/// now both name keeps that type.
+static bool share_type(const Slot *old, Slot *nw, const char *name) {
+    if (!old->ty) return true;
+    if (!type_ok(old, nw->v, name)) return false;
+    if (nw->ty && strcmp(nw->ty, old->ty) != 0)
+        return fail("%s is %s %s variable, so it can't share %s %s variable", name, a_an(old->ty), old->ty, a_an(nw->ty), nw->ty);
+    nw->ty = old->ty;
+    return true;
+}
+
 static bool set_entry(Slot *bs, const Key *key, Value v) {
     if (!not_const(bs)) {
         v_release(v);
@@ -238,7 +265,7 @@ static bool set_entry(Slot *bs, const Key *key, Value v) {
         if (key->is_name) {
             Slot *s = om_gets(&t->named, key->name);
             if (s) {
-                if (!not_const(s)) {
+                if (!not_const(s) || !type_ok(s, v, key->name->s)) {
                     v_release(v);
                     return false;
                 }
@@ -252,7 +279,9 @@ static bool set_entry(Slot *bs, const Key *key, Value v) {
         size_t len = t->n;
         long i = resolve(key->pos, len);
         if (i >= 0) {
-            if (!not_const(t->items[i])) {
+            char where[40];
+            snprintf(where, sizeof where, "position %lld", (long long)key->pos);
+            if (!not_const(t->items[i]) || !type_ok(t->items[i], v, where)) {
                 v_release(v);
                 return false;
             }
@@ -489,7 +518,7 @@ static void declare(Interp *it, Str *name) {
 bool set_var(Interp *it, Str *name, Value v) {
     Slot *s = lookup_own(it, name);
     if (s) {
-        if (!const_name(s, name)) {
+        if (!const_name(s, name) || !type_ok(s, v, name->s)) {
             v_release(v);
             return false;
         }
@@ -504,7 +533,7 @@ bool set_var(Interp *it, Str *name, Value v) {
 /// Points a name at a slot (takes the slot).
 static bool bind_var(Interp *it, Str *name, Slot *s) {
     Slot *old = lookup_own(it, name);
-    if (old && !const_name(old, name)) {
+    if (old && (!const_name(old, name) || !share_type(old, s, name->s))) {
         slot_unref(s);
         return false;
     }
@@ -648,7 +677,10 @@ static bool eval_truth(Interp *it, Expr *e, bool *out) {
     return ok;
 }
 
+static bool exec_typed(Interp *it, Stmt *s);
+
 static Flow exec_kind(Interp *it, Stmt *s) {
+    if (s->ty) return exec_typed(it, s) ? F_NORMAL : F_ERR;
     if (s->global) return exec_global(it, s) ? F_NORMAL : F_ERR;
     switch (s->k) {
     case S_EXPR: {
@@ -1071,7 +1103,7 @@ static bool share_slot(Interp *it, Expr *e, Slot **out) {
 }
 
 /// x += r and friends (takes r).
-static bool compound(Slot *slot, Op op, Value r) {
+static bool compound(Slot *slot, Op op, Value r, const char *name) {
     Op base;
     switch (op) {
     case OP_ADD_SET: base = OP_ADD; break;
@@ -1097,6 +1129,10 @@ static bool compound(Slot *slot, Op op, Value r) {
     bool ok = binop(base, slot->v, r, &nv);
     v_release(r);
     if (!ok) return false;
+    if (!type_ok(slot, nv, name)) {
+        v_release(nv);
+        return false;
+    }
     v_release(slot->v);
     slot->v = nv;
     return true;
@@ -1132,10 +1168,15 @@ static bool assign_entry(Interp *it, Slot *bs, const Key *key, Op op, Expr *rhs)
             v_release(v);
             ok = const_name(s, key->name);
         } else if (op == OP_SET || op == OP_SHARE_SET) {
-            v_release(s->v);
-            s->v = v_copy(v);
+            if (type_ok(s, v, key->name->s)) {
+                v_release(s->v);
+                s->v = v_copy(v);
+            } else {
+                v_release(v);
+                ok = false;
+            }
         } else {
-            ok = compound(s, op, v);
+            ok = compound(s, op, v, key->name->s);
         }
         slot_unref(s);
         return ok;
@@ -1183,6 +1224,10 @@ static bool exec_global(Interp *it, Stmt *s) {
     if (s->k == S_FUNC) {
         Value f = make_func(it, s->fn);
         if (old) {
+            if (!type_ok(old, f, n->s)) {
+                v_release(f);
+                return false;
+            }
             v_release(old->v);
             old->v = f;
         } else {
@@ -1193,6 +1238,11 @@ static bool exec_global(Interp *it, Stmt *s) {
     if (s->op == OP_SHARE_SET) {
         Slot *sh;
         if (!share_slot(it, s->e2, &sh)) return false;
+        Slot *o = om_gets(&top(it)->env->map, n);
+        if (o && !share_type(o, sh, n->s)) {
+            slot_unref(sh);
+            return false;
+        }
         om_insert(&top(it)->env->map, n, sh);
         return true;
     }
@@ -1202,7 +1252,7 @@ static bool exec_global(Interp *it, Stmt *s) {
         v = v_copy(v);
         old = om_gets(&top(it)->env->map, n); // the value may have made it
         if (old) {
-            if (!const_name(old, n)) {
+            if (!const_name(old, n) || !type_ok(old, v, n->s)) {
                 v_release(v);
                 return false;
             }
@@ -1220,9 +1270,104 @@ static bool exec_global(Interp *it, Stmt *s) {
         slot_unref(old);
         return false;
     }
-    bool ok = compound(old, s->op, r);
+    bool ok = compound(old, s->op, r, n->s);
     slot_unref(old);
     return ok;
+}
+
+static bool assign(Interp *it, Expr *target, Op op, Expr *rhs);
+
+/// NUMBER score = 0 and the like: the variable takes only that type (and NULL).
+static bool exec_typed(Interp *it, Stmt *s) {
+    const char *ty = s->ty;
+    OrdMap *env = &top(it)->env->map;
+    bool global = s->global;
+    if (s->k == S_LOCAL) {
+        Value v = NULL_VALUE;
+        if (s->e) {
+            if (!eval(it, s->e, &v)) return false;
+            v = v_copy(v);
+        }
+        if (!fits(ty, v, s->name->s)) {
+            v_release(v);
+            return false;
+        }
+        Slot *sl = slot_new(v);
+        sl->ty = ty;
+        om_insert(&top(it)->scopes.s[0], s->name, sl);
+        return true;
+    }
+    if (s->k == S_CONST) {
+        if (global && om_gets(env, s->name))
+            return fail("%s already has an outside value, so CONST can't make it a constant. Use CONST where %s first gets its value", s->name->s, s->name->s);
+        Value v;
+        if (!eval(it, s->e, &v)) return false;
+        if (!fits(ty, v, s->name->s)) {
+            v_release(v);
+            return false;
+        }
+        if (global) {
+            om_insert(env, s->name, slot_const(v));
+            return true;
+        }
+        return make_const(it, s->name, v);
+    }
+    Str *n = s->e->name;
+    Slot *old = global ? om_gets(env, n) : lookup_own(it, n);
+    if (old && old->ty && strcmp(old->ty, ty) != 0)
+        return fail("%s is already %s %s variable, so it can't become %s %s one", n->s, a_an(old->ty), old->ty, a_an(ty), ty);
+    if (s->k == S_EXPR) {
+        // NUMBER score: makes it (NULL) or gives an existing one its type.
+        if (old) {
+            const char *vt = v_type(old->v);
+            if (old->v.t != V_NULL && strcmp(vt, ty) != 0)
+                return fail("%s already holds %s %s value, so it can't be %s %s variable", n->s, a_an(vt), vt, a_an(ty), ty);
+            old->ty = ty;
+            return true;
+        }
+        Slot *sl = slot_new(NULL_VALUE);
+        sl->ty = ty;
+        if (global) om_insert(env, n, sl);
+        else create_var(it, n, sl);
+        return true;
+    }
+    if (s->op == OP_SET) {
+        Value v;
+        if (!eval(it, s->e2, &v)) return false;
+        v = v_copy(v);
+        if (!fits(ty, v, n->s)) {
+            v_release(v);
+            return false;
+        }
+        old = global ? om_gets(env, n) : lookup_own(it, n); // the value may have made it
+        if (old) {
+            if (!const_name(old, n)) {
+                v_release(v);
+                return false;
+            }
+            v_release(old->v);
+            old->v = v;
+            old->ty = ty;
+        } else {
+            Slot *sl = slot_new(v);
+            sl->ty = ty;
+            if (global) om_insert(env, n, sl);
+            else create_var(it, n, sl);
+        }
+        return true;
+    }
+    // @= and += and the rest: the variable gets its type first, then the usual
+    // assignment checks the value.
+    if (old) {
+        if (!fits(ty, old->v, n->s)) return false;
+        old->ty = ty;
+    } else if (s->op == OP_SHARE_SET) {
+        Slot *sl = slot_new(NULL_VALUE);
+        sl->ty = ty;
+        if (global) om_insert(env, n, sl);
+        else create_var(it, n, sl);
+    }
+    return global ? exec_global(it, s) : assign(it, s->e, s->op, s->e2);
 }
 
 static bool assign(Interp *it, Expr *target, Op op, Expr *rhs) {
@@ -1253,7 +1398,7 @@ static bool assign(Interp *it, Expr *target, Op op, Expr *rhs) {
             slot_unref(slot);
             return false;
         }
-        bool ok = compound(slot, op, r);
+        bool ok = compound(slot, op, r, n->s);
         slot_unref(slot);
         return ok;
     }

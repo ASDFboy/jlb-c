@@ -6,7 +6,7 @@ const char *const WORDS[] = {
     // keywords
     "IF", "ELIF", "ELSEIF", "ELSE", "WHILE", "REPEAT", "FOR", "IN", "TO", "STEP", "BREAK", "SKIP",
     "DEF", "RETURN", "LOCAL", "GLOBAL", "CONST", "START", "TRY", "FAIL", "GOTO", "POINT", "IMPORT", "LOAD", "END", "TRUE",
-    "FALSE", "NULL", "UNDEFINE", "INSERT", "DROP",
+    "FALSE", "NULL", "UNDEFINE", "INSERT", "DROP", "NUMBER", "BOOL", "TABLE", "FUNCTION", "TASK",
     // built-in commands
     "PRINT", "NUM", "STR", "ENG", "HEX", "LEN", "ERROR", "INPUT", "READ", "READ_LINES", "WRITE",
     "EXISTS", "TYPE", "RANDOM", "ROUND", "FLOOR", "CEIL", "TIME", "DELTA_TIME", "WAIT", "UPPER",
@@ -22,8 +22,8 @@ const char *const WORDS[] = {
     "KEYS_DOWN", "TYPED", "MOUSE", "MOUSE_PRESSED", "MOUSE_RELEASED", "ON_KEY", "ON_KEY_UP", "ON_CLICK",
     "ON_MOUSE_MOVE", "ON_TYPE", "ON_RESIZE", "ON_CLOSE",
 };
-const int N_KEYWORDS = 31;
-const int GFX_FIRST = 88; // WORDS[88] is "WINDOW" (checked in graphics.c)
+const int N_KEYWORDS = 36;
+const int GFX_FIRST = 93; // WORDS[93] is "WINDOW" (checked in graphics.c)
 const int N_WORDS = (int)(sizeof WORDS / sizeof WORDS[0]);
 
 // Longest first, so "!===" wins over "!==" and so on (the same order as the Op enum).
@@ -37,6 +37,8 @@ const char *const OP_TEXT[OP_COUNT] = {
 int find_word(const char *w, size_t n) {
     // FUNC is the older name for DEF, and still works.
     if (n == 4 && memcmp(w, "FUNC", 4) == 0) w = "DEF", n = 3;
+    // STRING is another name for TEXT (in NUMBER/TEXT/... variable types).
+    if (n == 6 && memcmp(w, "STRING", 6) == 0) w = "TEXT", n = 4;
     for (int i = 0; i < N_WORDS; i++) {
         if (strlen(WORDS[i]) == n && memcmp(WORDS[i], w, n) == 0) return i;
     }

@@ -1,0 +1,26 @@
+15
+score is a NUMBER variable, so it can't hold a TEXT value
+score is a NUMBER variable, so it can't hold a TEXT value
+NULL
+Ann TEXT
+name is a TEXT variable, so it can't hold a NUMBER value
+NULL
+[1, 2, 3]
+bag is a TABLE variable, so it can't hold a TEXT value
+ready is a BOOL variable, so it can't hold a NUMBER value
+8
+on_hit is a FUNCTION variable, so it can't hold a NUMBER value
+bad is a NUMBER variable, so it can't hold a TEXT value
+plain already holds a TEXT value, so it can't be a NUMBER variable
+score is already a NUMBER variable, so it can't become a TEXT one
+NULL
+2
+n is a NUMBER variable, so it can't hold a TEXT value
+alias is a NUMBER variable, so it can't hold a TEXT value
+lives is a NUMBER variable, so it can't hold a TEXT value
+label is a TEXT variable, so it can't hold a NUMBER value
+1 9
+best is a NUMBER variable, so it can't hold a TEXT value
+oops is a NUMBER variable, so it can't hold a TEXT value
+pic is an IMAGE variable, so it can't hold a NUMBER value
+3
