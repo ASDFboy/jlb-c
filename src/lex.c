@@ -39,7 +39,7 @@ static Op word_op(const char *w) {
     static const struct {
         const char *word;
         Op op;
-    } WORD_OPS[] = {{"AND", OP_ANDS}, {"OR", OP_ORS}, {"NAND", OP_NANDS}, {"NOR", OP_NORS}, {"XOR", OP_XOR}, {"XNOR", OP_XNOR}};
+    } WORD_OPS[] = {{"AND", OP_ANDS}, {"OR", OP_ORS}, {"NAND", OP_NANDS}, {"NOR", OP_NORS}, {"XOR", OP_XOR}, {"XNOR", OP_XNOR}, {"NOT", OP_NOT}};
     for (size_t i = 0; i < sizeof WORD_OPS / sizeof WORD_OPS[0]; i++)
         if (strcmp(w, WORD_OPS[i].word) == 0) return WORD_OPS[i].op;
     return OP_NONE;

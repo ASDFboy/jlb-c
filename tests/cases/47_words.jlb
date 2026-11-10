@@ -1,4 +1,4 @@
->> AND, OR, NAND, NOR, XOR and XNOR are the logic operators as words; RTRN is short for RETURN; STR is a type too.
+>> AND, OR, NAND, NOR, XOR, XNOR and NOT are the logic operators as words; RTRN is short for RETURN; STR is a type too.
 a = TRUE
 b = FALSE
 PRINT(a AND b, a OR b, a NAND b, a NOR b, a XOR b, a XNOR b)
@@ -18,3 +18,8 @@ TRY { name = 1 } FAIL e { PRINT(e.message) }
 DEF hello(STR who) { RETURN "hi " + who }
 PRINT(hello("Bo"))
 TRY { hello(3) } FAIL e { PRINT(e.message) }
+done = FALSE
+PRINT(NOT done, !done, NOT TRUE, NOT a AND b, !a && b, NOT (a AND b))
+IF NOT done { PRINT("not done yet") }
+WHILE NOT done { done = TRUE }
+PRINT(done)
